@@ -182,11 +182,12 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         # calculating waveform model differences
         frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,polarization=polarization,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
 
-        # setting spline resolution such that there are never repeated indexes
         if spline_resolution is None:
-            spline_resolution = int(1 + np.log(len(frequency_grid)-1)/np.log(2))
+            spline_resolution = int(0.25*len(frequency_grid))
+        elif spline_resolution > len(frequency_grid):
+            raise ValueError('Number of spline nodes larger than length of frequency grid!')
         
-        spline_indexes = np.geomspace(1,len(frequency_grid)-1,spline_resolution).astype(int)
+        spline_indexes = np.linspace(0,len(frequency_grid)-1,spline_resolution).astype(int)
         frequency_nodes = frequency_grid[spline_indexes]
         amplitude_parameters = amplitude_difference[spline_indexes]
         phase_parameters = phase_difference[spline_indexes]
