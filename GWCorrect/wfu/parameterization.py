@@ -72,10 +72,9 @@ def fd_model_difference(hf1,hf2,**kwargs):
     frequency_indexes = np.geomspace(start_index,len(hf1.frequency_array)-1,npoints).astype(int)
     frequency_grid = hf1.frequency_array[frequency_indexes]
 
-    # if not given, setting psd_data to an array of ones
+    # if not given, setting psd_data to GW170817 psd data https://dcc.ligo.org/ligo-p1900011/public
     if psd_data is None:
-        psd_data = np.ones((len(frequency_grid),2))
-        psd_data[:,0] = frequency_grid.copy()
+        psd_data = np.loadtxt('https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_GW170817_PSDs.dat',comments='#')
     
     # waveform amplitudes
     amplitude_1 = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes])
