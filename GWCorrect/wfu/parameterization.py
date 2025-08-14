@@ -26,21 +26,18 @@ def fd_model_difference(hf1,hf2,**kwargs):
     injection: dict, optional
         injection parameters if waveform generators do not have parameters in them
         default: None
-    npoints: int, optional
-        length of the desired frequency grid
-        default: 1000
     polarization: string, optional
         polarization of the strain data (plus or cross)
         default: 'plus'
     psd_data: numpy.ndarray, optional
         array containing the psd data and their corresponding frequencies
-        default: None
+        default: None; sets psd data to GW170817 psd data
     correction_parameter: float, optional
         fraction of maximum amplitude to cut off the amplitude at
         default: 0.0001
     ref_amplitude: numpy.ndarray, optional
         array of gravitational waveform amplitude
-        default None
+        default: None; generates a reference amplitude automatically
         
     Returns
     ==================
@@ -52,11 +49,11 @@ def fd_model_difference(hf1,hf2,**kwargs):
         array of phase difference values; if psd data is None, unaligned_phase_difference will be returned, aligned_phase_difference otherwise
     '''
     injection = kwargs.get('injection',None)
-    npoints = kwargs.get('npoints',1000)
     polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
     correction_parameter = kwargs.get('correction_parameter',0.0001)
     ref_amplitude = kwargs.get('ref_amplitude',None)
+    
     minimum_frequency = hf1.waveform_arguments['minimum_frequency']
     
     bilby.core.utils.log.setup_logger(log_level=30)
@@ -69,20 +66,19 @@ def fd_model_difference(hf1,hf2,**kwargs):
     
     # setting up frequency grid and frequency indexes
     start_index = np.argmin(np.abs(hf1.frequency_array - minimum_frequency))+1
-    frequency_indexes = np.geomspace(start_index,len(hf1.frequency_array)-1,npoints).astype(int)
-    frequency_grid = hf1.frequency_array[frequency_indexes]
+    frequency_grid = hf1.frequency_array[start_index:]
 
     # if not given, setting psd_data to GW170817 psd data https://dcc.ligo.org/ligo-p1900011/public
     if psd_data is None:
         psd_data = np.loadtxt('https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_GW170817_PSDs.dat',comments='#')
     
     # waveform amplitudes
-    amplitude_1 = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes])
-    amplitude_2 = np.abs(hf2.frequency_domain_strain()[polarization][frequency_indexes])
+    amplitude_1 = np.abs(hf1.frequency_domain_strain()[polarization][start_index:])
+    amplitude_2 = np.abs(hf2.frequency_domain_strain()[polarization][start_index:])
 
     # waveform phases
-    phase_1 = np.angle(hf1.frequency_domain_strain()[polarization][frequency_indexes])
-    phase_2 = np.angle(hf2.frequency_domain_strain()[polarization][frequency_indexes])
+    phase_1 = np.angle(hf1.frequency_domain_strain()[polarization][start_index:])
+    phase_2 = np.angle(hf2.frequency_domain_strain()[polarization][start_index:])
                      
     amplitude_difference = (amplitude_2/amplitude_1) - 1
     unaligned_phase_difference = phase_2-phase_1
@@ -98,7 +94,7 @@ def fd_model_difference(hf1,hf2,**kwargs):
     
     # fitting a line to raw_phase_difference weighted by PSDs and subtracting off that line
     if ref_amplitude is None:
-        ref_amplitude = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes][0:final_index])
+        ref_amplitude = np.abs(hf1.frequency_domain_strain()[polarization][start_index:][0:final_index])
     ref_amplitude = np.interp(frequency_grid[0:final_index],frequency_grid[-1]*np.linspace(0,1,len(ref_amplitude)),ref_amplitude)
     ref_sigma = np.interp(frequency_grid[0:final_index],psd_data[:,0],psd_data[:,1])
     align_weights = (ref_amplitude**2)/(ref_sigma)
@@ -129,21 +125,18 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         bilby prior object
     nsamples: int
         number of draws of waveform uncertainty desired
-    spline_resolution: int, 500
+    spline_resolution: int, None
         number of spline nodes desired
-        default: 500
-    npoints: int, optional
-        length of the desired frequency grid
-        default: 1000
+        default: None; automatically set based on the length of the frequency array
     psd_data: numpy.ndarray, optional
         array containing the psd data and their corresponding frequencies
-        default: None
+        default: None; sets psd data to GW170817 psd data
     correction_parameter: float, optional
         fraction of maximum amplitude to cut off the amplitude at
         default: 0.0001
     ref_amplitude: numpy.ndarray, optional
-        reference amplitude for residual phase calculation
-        default: None
+        array of gravitational waveform amplitude
+        default: None; generates a reference amplitude automatically
     polarization: string, optional
         polarization of the strain data (plus or cross)
         default: 'plus'
@@ -165,12 +158,11 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         injection: dictionary
             source parameters injected into the waveform generators
     '''
-    npoints = kwargs.get('npoints',1000)
     polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
     correction_parameter = kwargs.get('correction_parameter',0.0001)
     ref_amplitude = kwargs.get('ref_amplitude',None)
-    spline_resolution = kwargs.get('spline_resolution',500)
+    spline_resolution = kwargs.get('spline_resolution',None)
 
     parameterization_data = np.zeros([nsamples,5],dtype=object)
 
@@ -188,9 +180,13 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         injection = prior.sample()
         
         # calculating waveform model differences
-        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,npoints=npoints,polarization=polarization,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
+        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,polarization=polarization,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
 
-        spline_indexes = np.linspace(0,len(frequency_grid)-1,spline_resolution).astype(int)
+        # setting spline resolution such that there are never repeated indexes
+        if spline_resolution is None:
+            spline_resolution = int(1 + np.log(len(frequency_grid)-1)/np.log(2))
+        
+        spline_indexes = np.geomspace(1,len(frequency_grid)-1,spline_resolution).astype(int)
         frequency_nodes = frequency_grid[spline_indexes]
         amplitude_parameters = amplitude_difference[spline_indexes]
         phase_parameters = phase_difference[spline_indexes]
