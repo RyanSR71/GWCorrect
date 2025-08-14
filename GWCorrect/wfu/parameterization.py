@@ -29,6 +29,9 @@ def fd_model_difference(hf1,hf2,**kwargs):
     npoints: int, optional
         length of the desired frequency grid
         default: 1000
+    polarization: string, optional
+        polarization of the strain data (plus or cross)
+        default: 'plus'
     psd_data: numpy.ndarray, optional
         array containing the psd data and their corresponding frequencies
         default: None
@@ -46,17 +49,15 @@ def fd_model_difference(hf1,hf2,**kwargs):
     amplitude_difference: numpy.ndarray
         array of amplitude difference values
     phase_difference: numpy.ndarray
-        array of phase difference values
+        array of phase difference values; if psd data is None, unaligned_phase_difference will be returned, aligned_phase_difference otherwise
     '''
     injection = kwargs.get('injection',None)
     npoints = kwargs.get('npoints',1000)
+    polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
     correction_parameter = kwargs.get('correction_parameter',0.0001)
     ref_amplitude = kwargs.get('ref_amplitude',None)
-
-    f_low = hf1.waveform_arguments['minimum_frequency']
-    f_high = hf1.waveform_arguments['maximum_frequency']
-    f_ref = hf1.waveform_arguments['reference_frequency']
+    minimum_frequency = hf1.waveform_arguments['minimum_frequency']
     
     bilby.core.utils.log.setup_logger(log_level=30)
     np.seterr(all='ignore')
@@ -67,21 +68,22 @@ def fd_model_difference(hf1,hf2,**kwargs):
         hf2.frequency_domain_strain(parameters=injection)
     
     # setting up frequency grid and frequency indexes
-    start_index = np.argmin(np.abs(hf1.frequency_array - f_ref))+1
-    frequency_grid = np.geomspace(f_low,f_high,npoints)
-    wf_freqs = np.geomspace(start_index,len(hf1.frequency_array)-1,npoints).astype(int)
+    start_index = np.argmin(np.abs(hf1.frequency_array - minimum_frequency))+1
+    frequency_indexes = np.geomspace(start_index,len(hf1.frequency_array)-1,npoints).astype(int)
+    frequency_grid = hf1.frequency_array[frequency_indexes]
 
-    # full waveforms from polarizations
-    waveform_1 = hf1.frequency_domain_strain()['plus'][wf_freqs]-hf1.frequency_domain_strain()['cross'][wf_freqs]*1j
-    waveform_2 = hf2.frequency_domain_strain()['plus'][wf_freqs]-hf2.frequency_domain_strain()['cross'][wf_freqs]*1j
+    # if not given, setting psd_data to an array of ones
+    if psd_data is None:
+        psd_data = np.ones((len(frequency_grid),2))
+        psd_data[:,0] = frequency_grid.copy()
     
     # waveform amplitudes
-    amplitude_1 = np.abs(waveform_1)
-    amplitude_2 = np.abs(waveform_2)
+    amplitude_1 = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes])
+    amplitude_2 = np.abs(hf2.frequency_domain_strain()[polarization][frequency_indexes])
 
     # waveform phases
-    phase_1 = np.angle(waveform_1)
-    phase_2 = np.angle(waveform_2)
+    phase_1 = np.angle(hf1.frequency_domain_strain()[polarization][frequency_indexes])
+    phase_2 = np.angle(hf2.frequency_domain_strain()[polarization][frequency_indexes])
                      
     amplitude_difference = (amplitude_2/amplitude_1) - 1
     unaligned_phase_difference = phase_2-phase_1
@@ -95,25 +97,20 @@ def fd_model_difference(hf1,hf2,**kwargs):
     final_index_2 = list(amplitude_2).index(min(amplitude_2, key=lambda x:np.abs(x-correction_parameter*np.max(amplitude_2))))
     final_index = min([final_index_1,final_index_2])
     
+    # fitting a line to raw_phase_difference weighted by PSDs and subtracting off that line
     if ref_amplitude is None:
-        ref_amplitude = np.copy(amplitude_2)
-    ref_amplitude = np.interp(hf1.frequency_array[wf_freqs][0:final_index],f_high*np.linspace(0,1,len(ref_amplitude)),ref_amplitude)
-    
-    if psd_data is None:
-        ref_sigma = np.max(ref_amplitude**2)
-    else:
-        ref_sigma = np.interp(hf1.frequency_array[wf_freqs][0:final_index], psd_data[:,0],psd_data[:,1])
+        ref_amplitude = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes][0:final_index])
+    ref_amplitude = np.interp(frequency_grid[0:final_index],frequency_grid[-1]*np.linspace(0,1,len(ref_amplitude)),ref_amplitude)
+    ref_sigma = np.interp(frequency_grid[0:final_index],psd_data[:,0],psd_data[:,1])
+    align_weights = (ref_amplitude**2)/(ref_sigma) * frequency_grid
+    fit = np.polyfit(frequency_grid[0:final_index],unaligned_phase_difference[0:final_index],1,w=align_weights)
+    unaligned_phase_difference_no_shifts = unaligned_phase_difference[0:final_index]-np.poly1d(fit)(frequency_grid[0:final_index])
+    phase_difference = np.copy(unaligned_phase_difference)
+    phase_difference[0:final_index] = unaligned_phase_difference_no_shifts
         
-    align_weights = (hf1.frequency_array[wf_freqs][0:final_index]*ref_amplitude**2)/(ref_sigma)
-    fit = np.polyfit(hf1.frequency_array[wf_freqs][0:final_index],unaligned_phase_difference[0:final_index],1,w=align_weights)
-    unaligned_phase_difference_no_shifts = unaligned_phase_difference[0:final_index]-np.poly1d(fit)(hf1.frequency_array[wf_freqs][0:final_index])
-    aligned_phase_difference = np.copy(unaligned_phase_difference)
-    aligned_phase_difference[0:final_index] = unaligned_phase_difference_no_shifts
-        
-    # making the discontinuity correction to amplitude_difference
+    # making the discontinuity correction to the waveform model differences
     amplitude_difference[final_index:] = amplitude_difference[final_index-1]
-    phase_difference = np.copy(aligned_phase_difference)
-    phase_difference[final_index:] = aligned_phase_difference[final_index-1]
+    phase_difference[final_index:] = phase_difference[final_index-1]
     
     return frequency_grid,amplitude_difference,phase_difference
 
@@ -145,12 +142,12 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
     correction_parameter: float, optional
         fraction of maximum amplitude to cut off the amplitude at
         default: 0.0001
-    deletion_parameter: float, optional
-        upper limit for the first value of dA; if dA_0 rises above this value, the corresponding parameterization row will be deleted
-        default: 0.5
     ref_amplitude: numpy.ndarray, optional
         reference amplitude for residual phase calculation
         default: None
+    polarization: string, optional
+        polarization of the strain data (plus or cross)
+        default: 'plus'
 
     Returns
     ==================
@@ -170,9 +167,9 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
             source parameters injected into the waveform generators
     '''
     npoints = kwargs.get('npoints',1000)
+    polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
     correction_parameter = kwargs.get('correction_parameter',0.0001)
-    deletion_parameter = kwargs.get('deletion_parameter',0.5)
     ref_amplitude = kwargs.get('ref_amplitude',None)
     spline_resolution = kwargs.get('spline_resolution',500)
 
@@ -181,8 +178,7 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
     # setting the reference amplitude
     if ref_amplitude is None:
         injection = prior.sample()
-        ref_waveform = hf2.frequency_domain_strain(parameters=injection)['plus']-hf2.frequency_domain_strain(parameters=injection)['cross']*1j
-        ref_amplitude = np.abs(ref_waveform)
+        ref_amplitude = np.abs(hf1.frequency_domain_strain(parameters=injection)[polarization])
 
     log = logging.getLogger(__name__)
     log.setLevel(logging.INFO)
@@ -193,33 +189,19 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         injection = prior.sample()
         
         # calculating waveform model differences
-        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,npoints=npoints,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
+        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,npoints=npoints,polarization=polarization,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
 
         spline_indexes = np.linspace(0,len(frequency_grid)-1,spline_resolution).astype(int)
         frequency_nodes = frequency_grid[spline_indexes]
         amplitude_parameters = amplitude_difference[spline_indexes]
         phase_parameters = phase_difference[spline_indexes]
-
-        dA_0 = np.abs(amplitude_difference[0])
-        if dA_0 < deletion_parameter:
-            parameterization_data[index][0] = np.array(frequency_grid)
-            parameterization_data[index][1] = np.array(frequency_nodes)
-            parameterization_data[index][2] = np.array(amplitude_parameters)
-            parameterization_data[index][3] = np.array(phase_parameters)
-            parameterization_data[index][4] = injection
-        else:
-            parameterization_data[index][0] = None
-
-    rows_to_delete = []
-    for index in range(nsamples):
-        if parameterization_data[index][0] is None:
-            rows_to_delete.append(index)
-
-    deletions = 0
-    while len(rows_to_delete) != 0:
-        parameterization_data = np.delete(parameterization_data,rows_to_delete[0]-deletions,axis=0)
-        rows_to_delete.pop(0)
-        deletions += 1
+        
+        #constructing output matrix
+        parameterization_data[index][0] = np.array(frequency_grid)
+        parameterization_data[index][1] = np.array(frequency_nodes)
+        parameterization_data[index][2] = np.array(amplitude_parameters)
+        parameterization_data[index][3] = np.array(phase_parameters)
+        parameterization_data[index][4] = injection
     
     return parameterization_data
 
