@@ -102,7 +102,7 @@ def fd_model_difference(hf1,hf2,**kwargs):
         ref_amplitude = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes][0:final_index])
     ref_amplitude = np.interp(frequency_grid[0:final_index],frequency_grid[-1]*np.linspace(0,1,len(ref_amplitude)),ref_amplitude)
     ref_sigma = np.interp(frequency_grid[0:final_index],psd_data[:,0],psd_data[:,1])
-    align_weights = (ref_amplitude**2)/(ref_sigma) * frequency_grid
+    align_weights = (ref_amplitude**2)/(ref_sigma) * frequency_grid[0:final_index]
     fit = np.polyfit(frequency_grid[0:final_index],unaligned_phase_difference[0:final_index],1,w=align_weights)
     unaligned_phase_difference_no_shifts = unaligned_phase_difference[0:final_index]-np.poly1d(fit)(frequency_grid[0:final_index])
     phase_difference = np.copy(unaligned_phase_difference)
