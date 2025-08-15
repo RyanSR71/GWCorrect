@@ -104,7 +104,7 @@ def total_mass_conversion(parameters):
 
 
 
-def TotalMassConstraintPPE(*,name,f_low,**kwargs):
+def TotalMassConstraintPPE(*,name,minimum_frequency,**kwargs):
     '''
     Generates a bilby prior to constrain the total mass
     
@@ -112,7 +112,7 @@ def TotalMassConstraintPPE(*,name,f_low,**kwargs):
     ===================
     name: string
         name of the prior
-    f_low: float
+    minimum_frequency: float
         lower bound on the frequency band
     unit: string, optional
         unit of the parameter
@@ -137,6 +137,6 @@ def TotalMassConstraintPPE(*,name,f_low,**kwargs):
     boundary = kwargs.get('boundary',None)
     Mf_IM = kwargs.get('xi_low',0.018)
     
-    total_mass_prior = bilby.core.prior.Constraint(name=name,latex_label=latex_label,minimum=0, maximum=Mf_IM*203025.4467280836/f_low, unit=unit)
+    total_mass_prior = bilby.core.prior.Constraint(name=name,latex_label=latex_label,minimum=0, maximum=Mf_IM*203025.4467280836/minimum_frequency, unit=unit)
     
     return total_mass_prior
