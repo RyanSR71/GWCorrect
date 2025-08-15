@@ -32,16 +32,16 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     geometrized: bool, optional
         if True, will return geometrized frequency nodes; if False, normal frequency nodes (Hz)
         default: True
-    xi_low: float, optional
+    xi_min: float, optional
         if geometrized is True; lower bound on the geometrized frequency band
         default: 0.018
-    xi_high: float, optional
+    xi_max: float, optional
         if geometrized is True; upper bound on the geometrized frequency band
         default: 1/pi (0.318...)
-    f_low: float, optional
+    minimum_frequency: float, optional
         if geometrized is False; lower bound on the normal frequency band
         default: 20.0 Hz
-    f_high: float, optional
+    maximum_frequency: float, optional
         if geometrized is False; upper bound on the normal frequency band
         default: 1024.0 Hz
         
@@ -52,10 +52,10 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     prior: bilby.core.prior.PriorDict
         bilby prior object containing the phase correction priors
     '''
-    f_low = kwargs.get('f_low',20)
-    f_high = kwargs.get('f_high',1024)
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    minimum_frequency = kwargs.get('minimum_frequency',20)
+    maximum_frequency = kwargs.get('maximum_frequency',1024)
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     prior = kwargs.get('prior',None)
     geometrized = kwargs.get('geometrized',True)
     mean_phase_difference = kwargs.get('mean_phase_difference',None)
@@ -68,10 +68,10 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     
     if geometrized is True:
         frequency_grid = np.linspace(0.001,1,len(phase_uncertainty))
-        desired_frequency_nodes = np.geomspace(xi_low,xi_high,k+1)
+        desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
     else:
-        frequency_grid = np.linspace(f_low,f_high,len(phase_uncertainty))
-        desired_frequency_nodes = np.geomspace(f_low,f_high,k+1)
+        frequency_grid = np.linspace(minimum_frequency,maximum_frequency,len(phase_uncertainty))
+        desired_frequency_nodes = np.geomspace(minimum_frequency,maximum_frequency,k+1)
         
     indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
     frequency_nodes = np.array(frequency_grid[indexes])
@@ -104,16 +104,16 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     geometrized: bool, optional
         if True, will return geometrized frequency nodes; if False, normal frequency nodes (Hz)
         default: True
-    xi_low: float, optional
+    xi_min: float, optional
         if geometrized is True; lower bound on the geometrized frequency band
         default: 0.018
-    xi_high: float, optional
+    xi_max: float, optional
         if geometrized is True; upper bound on the geometrized frequency band
         default: 1/pi (0.318...)
-    f_low: float, optional
+    minimum_frequency: float, optional
         if geometrized is False; lower bound on the normal frequency band
         default: 20.0 Hz
-    f_high: float, optional
+    maximum_frequency: float, optional
         if geometrized is False; upper bound on the normal frequency band
         default: 1024.0 Hz
         
@@ -124,10 +124,10 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     prior: bilby.core.prior.PriorDict
         bilby prior object containing the amplitude correction priors
     '''    
-    f_low = kwargs.get('f_low',20)
-    f_high = kwargs.get('f_high',1024)
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    minimum_frequency = kwargs.get('minimum_frequency',20)
+    maximum_frequency = kwargs.get('maximum_frequency',1024)
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     prior = kwargs.get('prior',None)
     geometrized = kwargs.get('geometrized',True)
     mean_amplitude_difference = kwargs.get('mean_amplitude_difference',None)
@@ -140,10 +140,10 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     
     if geometrized is True:
         frequency_grid = np.linspace(0.001,1,len(amplitude_uncertainty))
-        desired_frequency_nodes = np.geomspace(xi_low,xi_high,k+1)
+        desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
     else:
-        frequency_grid = np.linspace(f_low,f_high,len(amplitude_uncertainty))
-        desired_frequency_nodes = np.geomspace(f_low,f_high,k+1)
+        frequency_grid = np.linspace(minimum_frequency,maximum_frequency,len(amplitude_uncertainty))
+        desired_frequency_nodes = np.geomspace(minimum_frequency,maximum_frequency,k+1)
         
     indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
     frequency_nodes = np.array(frequency_grid[indexes])
@@ -157,7 +157,7 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
 
 
 
-def xi_priors(waveform_generator,prior,psd_data,n,f_low,**kwargs):
+def xi_priors(waveform_generator,prior,psd_data,n,minimum_frequency,**kwargs):
     '''
     Generates xi_0 and delta_xi_tilde priors from a BBH/BNS/NSBH prior and adds them to the original prior.
 
@@ -171,7 +171,7 @@ def xi_priors(waveform_generator,prior,psd_data,n,f_low,**kwargs):
         array of power spectral density data; first column needs to be the frequency points and the second column needs to be the data
     n: int
         number of frequency nodes
-    f_low: float
+    minimum_frequency: float
         lower bound on the frequency band (Hz)
     xi_0_latex_label: string, optional
         latex label for xi_0
@@ -179,10 +179,10 @@ def xi_priors(waveform_generator,prior,psd_data,n,f_low,**kwargs):
     delta_xi_tilde_latex_label: string, optional
         latex_label for delta_xi_tilde
         default: r'$delta tilde xi$'
-    xi_low: float, optional
+    xi_min: float, optional
         lower bound on the dimensionless frequency band
         default: 0.018
-    xi_high: float, optional
+    xi_max: float, optional
         upper bound on the dimensionless frequency band
         default: 1/pi
     samples: int, optional
@@ -191,32 +191,32 @@ def xi_priors(waveform_generator,prior,psd_data,n,f_low,**kwargs):
     '''
     xi_0_latex_label = kwargs.get('xi_0_latex_label',r'$\xi_0$')
     delta_xi_tilde_latex_label = kwargs.get('delta_xi_tilde_latex_label',r'$\delta\tilde\xi$')
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     samples = kwargs.get('samples',1000)
     
-    lower_xis, upper_xis = A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_low,xi_high,'Generating Priors')
+    lower_xis, upper_xis = A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,'Generating Priors')
     
     mu_1,sigma_1 = scipy.stats.norm.fit(lower_xis)
     mu_2,sigma_2 = scipy.stats.norm.fit(upper_xis)
     
-    delta_xi_tildes = (np.array(upper_xis)-np.array(lower_xis))/(xi_high-np.array(lower_xis))
+    delta_xi_tildes = (np.array(upper_xis)-np.array(lower_xis))/(xi_max-np.array(lower_xis))
     
     mu_3,sigma_3 = scipy.stats.norm.fit(delta_xi_tildes)
     
     prior['xi_0'] = TFDG(name='xi_0',latex_label=xi_0_latex_label,
                         mu_1=mu_1,mu_2=mu_2,sigma_1=sigma_1,sigma_2=sigma_2,
-                        minimum=xi_low,maximum=xi_0_upper_bound(n,xi_low=xi_low,xi_high=xi_high))
+                        minimum=xi_min,maximum=xi_0_upper_bound(n,xi_min=xi_min,xi_max=xi_max))
     
     prior['delta_xi_tilde'] = EHG(name='delta_xi_tilde',latex_label=delta_xi_tilde_latex_label,
                                   mu=mu_3,sigma=sigma_3,maximum=1,
-                                  minimum=delta_xi_tilde_lower_bound(n,f_low,waveform_generator.duration,xi_low=xi_low,xi_high=xi_high))
+                                  minimum=delta_xi_tilde_lower_bound(n,minimum_frequency,waveform_generator.duration,xi_min=xi_min,xi_max=xi_max))
     
     return prior
 
 
 
-def TotalMassConstraint(*,name,f_low,f_high,**kwargs):
+def TotalMassConstraint(*,name,minimum_frequency,maximum_frequency,**kwargs):
     '''
     Generates a bilby prior to constrain the total mass
     
@@ -224,9 +224,9 @@ def TotalMassConstraint(*,name,f_low,f_high,**kwargs):
     ===================
     name: string
         name of the prior
-    f_low: float
+    minimum_frequency: float
         lower bound on the frequency band
-    f_high: float
+    maximum_frequency: float
         upper bound of the frequency band
     unit: string, optional
         unit of the parameter
@@ -237,10 +237,10 @@ def TotalMassConstraint(*,name,f_low,f_high,**kwargs):
     boundary: string, optional
         boundary condition type for the prior
         default: None
-    xi_low: float, optional
+    xi_min: float, optional
         lower bound on the waveform uncertainty correction in dimensionless frequency
         default: 0.018
-    xi_high: float, optional
+    xi_max: float, optional
         upper bound on the waveform uncertainty correction in dimensionless frequency
         default: 1/pi, 0.318...
 
@@ -252,10 +252,10 @@ def TotalMassConstraint(*,name,f_low,f_high,**kwargs):
     unit = kwargs.get('unit',r'$\mathrm{M}_\odot$')
     latex_label = kwargs.get('latex_label',r'$M$')
     boundary = kwargs.get('boundary',None)
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     
-    total_mass_prior = bilby.core.prior.Constraint(name=name,latex_label=latex_label,minimum=xi_high*203025.4467280836/f_high, maximum=xi_low*203025.4467280836/f_low, unit=unit)
+    total_mass_prior = bilby.core.prior.Constraint(name=name,latex_label=latex_label,minimum=xi_max*203025.4467280836/maximum_frequency, maximum=xi_min*203025.4467280836/minimum_frequency, unit=unit)
     
     return total_mass_prior
 
