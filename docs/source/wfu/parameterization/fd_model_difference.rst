@@ -31,7 +31,7 @@ hf2: bilby.gw.waveform_generator.WaveformGenerator
 injection: dictionary, optional, None
    dictionary of injection parameters if waveform generators do not have parameters; if they do not, this argument is not optional
 npoints: int, optional, (None)
-   length of the desired frequency grid; if None, this will be set automatically according to 
+   length of the desired frequency grid; if None, this will be set automatically by the frequency grid
 polarization: string, optional, ('plus')
    polarization of the strain data {'plus','cross'}
 psd_data: numpy.ndarray, optional, (None)
