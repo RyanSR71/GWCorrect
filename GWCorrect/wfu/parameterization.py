@@ -74,9 +74,9 @@ def fd_model_difference(hf1,hf2,**kwargs):
     start_index = np.argmin(np.abs(hf1.frequency_array - minimum_frequency))
     end_index = np.argmin(np.abs(hf1.frequency_array - maximum_frequency))
     if npoints is None:
-        npoints = int(1+np.log(end_index/start_index)/np.log(1+start_index**-1))
-    elif npoints > int(1+np.log(end_index/start_index)/np.log(1+start_index**-1)):
-        raise ValueError(f'npoints value too large; maximum value is {int(1+np.log(end_index/start_index)/np.log(1+start_index**-1))}')
+        npoints = int(1+np.log(end_index/start_index)/np.log(1+1/start_index))
+    elif npoints > int(1+np.log(end_index/start_index)/np.log(1+1/start_index)):
+        raise ValueError(f'npoints value too large; maximum value is {int(1+np.log(end_index/start_index)/np.log(1+1/start_index))}')
     frequency_indexes = np.geomspace(start_index,end_index,npoints).astype(int)
     frequency_grid = hf1.frequency_array[frequency_indexes]
 
