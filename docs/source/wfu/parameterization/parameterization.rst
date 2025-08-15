@@ -4,7 +4,7 @@ parameterization
 .. code-block:: python
 
    GWCorrect.wfu.parameterization.parameterization(hf1,hf2,prior,nsamples,
-   spline_resolution=500,npoints=1000,psd_data=None,correction_parameter=1e-4,
+   spline_resolution=0.5,npoints=None,psd_data=None,correction_parameter=1e-4,
    ref_amplitude=None,polarization='plus')
 
 Generates samples of waveform differences between two approximants and parameterizes the data.
@@ -19,38 +19,30 @@ prior: bilby.core.prior.dict.PriorDict
    bilby prior object
 nsamples: int
    number of draws of waveform uncertainty desired
-spline_resolution: int, 500
+spline_resolution: int, (0.5)
    number of spline nodes desired
-   default: 500
-npoints: int, optional
-   length of the desired frequency grid
-   default: 1000
-psd_data: numpy.ndarray, optional
-   array containing the psd data and their corresponding frequencies
-   default: None
-correction_parameter: float, optional
+npoints: int, optional, (None)
+   length of the desired frequency grid; if None, this will be set automatically by the frequency grid
+psd_data: numpy.ndarray, optional, (None)
+   array containing the power spectral density data and their corresponding frequencies; if None, psd_data will be set to `GW170817 PSD data <https://dcc.ligo.org/ligo-p1900011/public>`_ 
+correction_parameter: float, optional, (0.0001)
    fraction of maximum amplitude to cut off the amplitude at
-   default: 0.0001
-ref_amplitude: numpy.ndarray, optional
+ref_amplitude: numpy.ndarray, optional, (None)
    reference amplitude for residual phase calculation
-   default: None
-polarization: string, optional
+polarization: string, optional, ('plus')
    polarization of the strain data (plus or cross)
-   default: 'plus'
   
 Returns:
 --------
 parameterized_data: numpy.ndarray
-   table containing the index, frequency_grid, dA_fit_parameters, dphi_fit_parameters, 
-   final_index, dA_final_point, dphi_final_point, and injection_parameters for each draw
-   
-   frequency_grid: numpy.ndarray
-      frequencies corresponding to the frequency parameters specified
-   frequency_nodes: numpy.ndarray
-      frequency nodes for the splines
-   dA_parameters: numpy.ndarray
-      amplitude difference spline parameters
-   dphi_parameters: numpy.ndarray
-      phase difference spline parameters
-   injection: dictionary
-      source parameters injected into the waveform generators
+   table containing the following:
+      frequency_grid: numpy.ndarray
+         frequencies corresponding to the frequency parameters specified
+      frequency_nodes: numpy.ndarray
+         frequency nodes for the splines
+      dA_parameters: numpy.ndarray
+         amplitude difference spline parameters
+      dphi_parameters: numpy.ndarray
+         phase difference spline parameters
+      injection: dictionary
+         source parameters injected into the waveform generators
