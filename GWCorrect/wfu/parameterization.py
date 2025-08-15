@@ -60,7 +60,6 @@ def fd_model_difference(hf1,hf2,**kwargs):
 
     minimum_frequency = hf1.waveform_arguments['minimum_frequency']
     maximum_frequency = hf1.waveform_arguments['maximum_frequency']
-    reference_frequency = hf1.waveform_arguments['reference_frequency']
     
     bilby.core.utils.log.setup_logger(log_level=30)
     np.seterr(all='ignore')
