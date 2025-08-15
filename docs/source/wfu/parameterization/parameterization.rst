@@ -19,8 +19,8 @@ prior: bilby.core.prior.dict.PriorDict
    bilby prior object
 nsamples: int
    number of draws of waveform uncertainty desired
-spline_resolution: int, (0.5)
-   number of spline nodes desired
+spline_resolution: float, optional, (0.5)
+   fraction of the frequency grid length to use as the number of spline nodes
 npoints: int, optional, (None)
    length of the desired frequency grid; if None, this will be set automatically by the frequency grid
 psd_data: numpy.ndarray, optional, (None)
