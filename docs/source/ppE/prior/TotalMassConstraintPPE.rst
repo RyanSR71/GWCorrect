@@ -3,8 +3,8 @@ TotalMassConstraintPPE
 
 .. code-block:: python
 
-  GWCorrect.ppE.prior.TotalMassConstraintPPE(*,name,minimum_frequency,maximum_frequency,latex_label=r'$M$',
-  boundary=None,unit=r'$\mathrm{M}_\odot$',Mf_IM=0.018)
+  GWCorrect.ppE.prior.TotalMassConstraintPPE(*,name,minimum_frequency,latex_label=r'$M$',boundary=None,
+  unit=r'$\mathrm{M}_\odot$',Mf_IM=0.018)
 
 Generates a bilby prior that constrains the total mass to ensure that the ppE correction is always within the frequency band.
 
@@ -18,8 +18,6 @@ name: string
   name of prior
 minimum_frequency: float
   lower bound on frequency band in Hz
-maximum_frequency: float
-  upper bound on the frequency band in Hz
 latex_label: string, optional, (r'$M$')
   label for the parameter in LaTeX
 boundary: string, optional, (None)
