@@ -29,20 +29,20 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     prior: bilby.core.prior.PriorDict, optional
         bilby prior object; if given, dphi priors will be added to this dictionary
         default: None
-    geometrized: bool, optional
-        if True, will return geometrized frequency nodes; if False, normal frequency nodes (Hz)
+    dimensionless: bool, optional
+        if True, will return dimensionless frequency nodes; if False, normal frequency nodes (Hz)
         default: True
     xi_min: float, optional
-        if geometrized is True; lower bound on the geometrized frequency band
+        if dimensionless is True; lower bound on the dimensionless frequency band
         default: 0.018
     xi_max: float, optional
-        if geometrized is True; upper bound on the geometrized frequency band
+        if dimensionless is True; upper bound on the dimensionless frequency band
         default: 1/pi (0.318...)
     minimum_frequency: float, optional
-        if geometrized is False; lower bound on the normal frequency band
+        if dimensionless is False; lower bound on the normal frequency band
         default: 20.0 Hz
     maximum_frequency: float, optional
-        if geometrized is False; upper bound on the normal frequency band
+        if dimensionless is False; upper bound on the normal frequency band
         default: 1024.0 Hz
         
     Returns
@@ -57,7 +57,7 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     xi_min = kwargs.get('xi_min',0.018)
     xi_max = kwargs.get('xi_max',1/np.pi)
     prior = kwargs.get('prior',None)
-    geometrized = kwargs.get('geometrized',True)
+    dimensionless = kwargs.get('dimensionless',True)
     mean_phase_difference = kwargs.get('mean_phase_difference',None)
     
     if prior is None:
@@ -66,7 +66,7 @@ def dphi_prior(phase_uncertainty,k, **kwargs):
     if mean_phase_difference is None:
         mean_phase_difference = np.array([0]*len(phase_uncertainty))
     
-    if geometrized is True:
+    if dimensionless is True:
         frequency_grid = np.linspace(0.001,1,len(phase_uncertainty))
         desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
     else:
@@ -101,20 +101,20 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     prior: bilby.core.prior.PriorDict, optional
         bilby prior object; if given, dA priors will be added to this dictionary
         default: None
-    geometrized: bool, optional
-        if True, will return geometrized frequency nodes; if False, normal frequency nodes (Hz)
+    dimensionless: bool, optional
+        if True, will return dimensionless frequency nodes; if False, normal frequency nodes (Hz)
         default: True
     xi_min: float, optional
-        if geometrized is True; lower bound on the geometrized frequency band
+        if dimensionless is True; lower bound on the dimensionless frequency band
         default: 0.018
     xi_max: float, optional
-        if geometrized is True; upper bound on the geometrized frequency band
+        if dimensionless is True; upper bound on the dimensionless frequency band
         default: 1/pi (0.318...)
     minimum_frequency: float, optional
-        if geometrized is False; lower bound on the normal frequency band
+        if dimensionless is False; lower bound on the normal frequency band
         default: 20.0 Hz
     maximum_frequency: float, optional
-        if geometrized is False; upper bound on the normal frequency band
+        if dimensionless is False; upper bound on the normal frequency band
         default: 1024.0 Hz
         
     Returns
@@ -129,7 +129,7 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     xi_min = kwargs.get('xi_min',0.018)
     xi_max = kwargs.get('xi_max',1/np.pi)
     prior = kwargs.get('prior',None)
-    geometrized = kwargs.get('geometrized',True)
+    dimensionless = kwargs.get('dimensionless',True)
     mean_amplitude_difference = kwargs.get('mean_amplitude_difference',None)
     
     if prior is None:
@@ -138,7 +138,7 @@ def dA_prior(amplitude_uncertainty,k, **kwargs):
     if mean_amplitude_difference is None:
         mean_amplitude_difference = np.array([0]*len(amplitude_uncertainty))
     
-    if geometrized is True:
+    if dimensionless is True:
         frequency_grid = np.linspace(0.001,1,len(amplitude_uncertainty))
         desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
     else:
