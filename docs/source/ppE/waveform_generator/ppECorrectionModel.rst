@@ -16,9 +16,9 @@ Make sure to include "beta_tilde", "delta_epsilon_tilde", and "b" in the prior.
 New Parameters:
 ---------------
 beta_tilde: float
-   rescaled phase correction amplitude parameter
+   rescaled ppE inspiral correction parameter
 delta_epsilon_tilde: float
-   rescaled ringdown frequency correction parameter
+   rescaled ppE post-inspiral correction parameter
 b: float
    PN order parameter
 
