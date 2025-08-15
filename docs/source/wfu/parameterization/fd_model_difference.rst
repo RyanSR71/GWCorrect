@@ -3,7 +3,7 @@ fd_model_difference
 
 .. code-block:: python
 
-   GWCorrect.wfu.parameterization.fd_model_difference(hf1,hf2,injection=None,npoints=1000,
+   GWCorrect.wfu.parameterization.fd_model_difference(hf1,hf2,injection=None,npoints=None,
    polarization='plus',psd_data=None,correction_parameter=0.0001,ref_amplitude=None)
 
 Generates frequency domain waveform differences between two models hf1 and hf2.
@@ -14,8 +14,6 @@ Generates frequency domain waveform differences between two models hf1 and hf2.
       \frac{\mathcal{A}_2(f;\vartheta)}{\mathcal{A}_1(f;\vartheta)}-1 & f \leq f_{\mathrm{disc}} \\
       \Delta\mathcal{A}_\mu(f_{\mathrm{disc}};\vartheta) & f > f_{\mathrm{disc}} 
    \end{cases}
-
-.. math::
 
 .. math::
 
@@ -32,12 +30,12 @@ hf2: bilby.gw.waveform_generator.WaveformGenerator
    frequency domain waveform generator object
 injection: dictionary, optional, None
    dictionary of injection parameters if waveform generators do not have parameters; if they do not, this argument is not optional
-npoints: int, optional, (1000)
-   length of the desired frequency grid
+npoints: int, optional, (None)
+   length of the desired frequency grid; if None, this will be set automatically according to 
 polarization: string, optional, ('plus')
    polarization of the strain data {'plus','cross'}
 psd_data: numpy.ndarray, optional, (None)
-   array containing the power spectral density data and their corresponding frequencies
+   array containing the power spectral density data and their corresponding frequencies; if None, psd_data will be set to `GW170817 PSD data <https://dcc.ligo.org/ligo-p1900011/public>`_
 correction_parameter: float, optional, (0.0001)
    fraction of the peak frequency domain amplitudes at which to cut off the amplitudes; part of the f_disc calculation
 ref_amplitude: numpy.ndarray, optional, (None)
