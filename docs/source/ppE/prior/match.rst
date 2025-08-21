@@ -9,7 +9,7 @@ Computes the normalized match between two waveforms.
 
 .. math::
 
-  \mathrm{match}(\tilde{h}_1,\tilde{h}_2)=\underset{\Delta t_c,\Delta\phi_c}{\mathrm{max}}\left|\frac{\int\hat{h}_1^*(f)\hat{h}_2(f)\exp(-2\pi if\Delta t_c+i\Delta\phi_c)df}{\sqrt{\int \hat{h}_1^*(f)\hat{h}_1(f)df}\sqrt{\int \hat{h}_2^*(f)\hat{h}_2(f)df}}\right|
+  \mathrm{match}(\tilde{h}_1,\tilde{h}_2)=\underset{\Delta t_c,\Delta\phi_c}{\mathrm{max}}\Re\left[\frac{\int\hat{h}_1^*(f)\hat{h}_2(f)\exp(-2\pi if\Delta t_c+i\Delta\phi_c)df}{\sqrt{\int \hat{h}_1^*(f)\hat{h}_1(f)df}\sqrt{\int \hat{h}_2^*(f)\hat{h}_2(f)df}}\right]
 
 Parameters:
 -----------
