@@ -19,9 +19,10 @@ def match(signal,data,duration,**kwargs):
     if len(signal) != len(data):
         raise Exception('Signal and Data do not have the same shape!')
     
-    signal_match = np.sqrt(bilby.gw.utils.matched_filter_snr(signal,signal,PSDs,duration))
-    data_match = np.sqrt(bilby.gw.utils.matched_filter_snr(data,data,PSDs,duration))
-    normalized_match = np.real(bilby.gw.utils.matched_filter_snr(signal,data,PSDs,duration)/(signal_match*data_match))
+    signal_signal_inner_product = bilby.gw.utils.noise_weighted_inner_product(signal,signal,PSDs,duration)
+    data_data_inner_product = bilby.gw.utils.noise_weighted_inner_product(data,data,PSDs,duration)
+    signal_data_inner_product = bilby.gw.utils.noise_weighted_inner_product(signal,data,PSDs,duration)
+    normalized_match = np.real(signal_data_inner_product/(np.sqrt(signal_signal_inner_product)*np.sqrt(data_data_inner_product)))
     
     return normalized_match
 
