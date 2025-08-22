@@ -95,6 +95,7 @@ def GeneralCorrectionModelBBH(
     sigma_dA_spline = kwargs.get('sigma_dA_spline',None)
     sigma_dphi_spline = kwargs.get('sigma_dphi_spline',None)
     xi_high = kwargs.get('xi_high',1/np.pi)
+    psd_data = kwargs.get('psd_data',None)
     gamma = kwargs.get('gamma',0.025)
     
     waveform_arguments = dict(
@@ -112,7 +113,7 @@ def GeneralCorrectionModelBBH(
     
     waveform_correction = GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,
                                                  sigma_dA_spline,sigma_dphi_spline,
-                                                 mass_1,mass_2,xi_high,gamma)
+                                                 mass_1,mass_2,xi_high,psd_data,gamma)
     
     model_strain['plus'] *= waveform_correction
     model_strain['cross'] *= waveform_correction
