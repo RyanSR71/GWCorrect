@@ -89,7 +89,7 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
     if psd_data is not None:
         psd_data_interp = np.interp(frequency_array,psd_data[:,0],psd_data[:,1])
         weights = (ref_amplitude**2)/psd_data_interp
-        linear_fit = np.polyfit(frequency_grid,smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma),1,w=weights)
+        linear_fit = np.polyfit(frequency_array,smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma),1,w=weights)
         phase_correction_coefs = np.poly1d(linear_fit)(frequency_nodes)
     else:
         phase_correction_coefs = np.zeros(len(dphis))
