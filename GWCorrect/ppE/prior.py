@@ -9,22 +9,12 @@ from pesummary.io import read
 
 
 
-def match(signal,data,duration,**kwargs):
-
-    PSDs = kwargs.get('PSDs',None)
-
-    if PSDs is None:
-        PSDs = np.ones(len(signal))
-
-    if len(signal) != len(data):
-        raise Exception('Signal and Data do not have the same shape!')
-    
-    signal_signal_inner_product = bilby.gw.utils.noise_weighted_inner_product(signal,signal,PSDs,duration)
-    data_data_inner_product = bilby.gw.utils.noise_weighted_inner_product(data,data,PSDs,duration)
-    signal_data_inner_product = bilby.gw.utils.noise_weighted_inner_product(signal,data,PSDs,duration)
-    normalized_match = np.real(signal_data_inner_product/(np.sqrt(signal_signal_inner_product)*np.sqrt(data_data_inner_product)))
-    
-    return normalized_match
+def match(waveform_1,waveform_2,injection):
+    delta_f = waveform_1.frequency_array[1]-waveform_1.frequency_array[0]
+    strain_1 = pycbc.waveform.FrequencySeries(waveform_1.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
+    strain_2 = pycbc.waveform.FrequencySeries(waveform_2.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
+    match = pycbc.filter.matchedfilter.match(strain_1,strain_2)[0]
+    return match
 
 
 
@@ -34,8 +24,6 @@ def match_plot(ppE_waveform_generator,GR_waveform_generator,injection,beta_tilde
     save = kwargs.get('save',False)
     path = kwargs.get('path',None)
     levels = kwargs.get('levels',np.linspace(0,1,21))
-    
-    GR_waveform = GR_waveform_generator.frequency_domain_strain(parameters=injection)['plus']
     
     if len(beta_tildes) != len(delta_epsilon_tildes):
         raise Exception(f'beta_tilde array and delta_epsilon_tilde array do not have the same length! {len(beta_tildes)}, {len(delta_epsilon_tildes)}')
@@ -53,9 +41,7 @@ def match_plot(ppE_waveform_generator,GR_waveform_generator,injection,beta_tilde
                 injection['beta_tilde'] = beta_tildes[i]
                 injection['delta_epsilon_tilde'] = delta_epsilon_tildes[j]
 
-                ppE_waveform = ppE_waveform_generator.frequency_domain_strain(parameters=injection)['plus']
-
-                match_value = match(ppE_waveform,GR_waveform,ppE_waveform_generator.duration,PSDs=PSDs)
+                match_value = match(ppE_waveform_generator,GR_waveform_generator,injection)
 
                 match_grid[j,i] = match_value
 
