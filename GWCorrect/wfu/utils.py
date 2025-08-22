@@ -70,7 +70,7 @@ def variable_prior(uncertainty,k,xi_low,xi_high):
 
 
 
-def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_high,gamma):
+def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_high,ref_amplitude,psd_data,gamma):
     n = len(dAs)-1
     total_mass = mass_1+mass_2
     dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_high-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
@@ -85,7 +85,16 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
         sigma_dphi = np.ones(n+1)
     
     amplitude_correction = smooth_interpolation(frequency_array,frequency_nodes,dAs*sigma_dA,gamma)
-    phase_correction = smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma)
+
+    if psd_data is not None:
+        psd_data_interp = np.interp(frequency_array,psd_data[:,0],psd_data[:,1])
+        weights = (ref_amplitude**2)/psd_data_interp
+        linear_fit = np.polyfit(frequency_grid,smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma),1,w=weights)
+        phase_correction_coefs = np.poly1d(linear_fit)(frequency_nodes)
+    else:
+        phase_correction_coefs = np.zeros(len(dphis))
+        
+    phase_correction = smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi-phase_correction_coefs,gamma)
     
     waveform_correction = (1+amplitude_correction)*np.exp(phase_correction*1j)
     return waveform_correction
