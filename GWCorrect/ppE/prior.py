@@ -25,7 +25,7 @@ def match_plot(ppE_waveform_generator,GR_waveform_generator,injection,beta_tilde
     cmap = kwargs.get('cmap','viridis')
     save = kwargs.get('save',False)
     path = kwargs.get('path',None)
-    levels = kwargs.get('levels',np.linspace(0,1,21))
+    levels = kwargs.get('levels',None)
     
     if len(beta_tildes) != len(delta_epsilon_tildes):
         raise Exception(f'beta_tilde array and delta_epsilon_tilde array do not have the same length! {len(beta_tildes)}, {len(delta_epsilon_tildes)}')
