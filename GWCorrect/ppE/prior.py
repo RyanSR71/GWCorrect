@@ -3,6 +3,7 @@ import bilby
 import logging
 import tqdm
 import pycbc
+import pycbc.waveform as waveform
 from ..wfu.utils import ProgressBar
 import matplotlib.pyplot as plt
 from pesummary.gw.file.strain import StrainData
@@ -12,8 +13,8 @@ from pesummary.io import read
 
 def match(waveform_1,waveform_2,injection):
     delta_f = waveform_1.frequency_array[1]-waveform_1.frequency_array[0]
-    strain_1 = pycbc.waveform.FrequencySeries(waveform_1.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
-    strain_2 = pycbc.waveform.FrequencySeries(waveform_2.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
+    strain_1 = waveform.FrequencySeries(waveform_1.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
+    strain_2 = waveform.FrequencySeries(waveform_2.frequency_domain_strain(parameters=injection)['plus'],delta_f=delta_f)
     match = pycbc.filter.matchedfilter.match(strain_1,strain_2)[0]
     return match
 
