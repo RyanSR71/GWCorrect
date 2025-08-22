@@ -110,10 +110,11 @@ def GeneralCorrectionModelBBH(
         luminosity_distance=luminosity_distance, theta_jn=theta_jn, phase=phase,
         a_1=a_1, a_2=a_2, tilt_1=tilt_1, tilt_2=tilt_2, phi_12=phi_12,
         phi_jl=phi_jl, **waveform_arguments)
-    
+
+    ref_amplitude = np.abs(model_strain['plus']) 
     waveform_correction = GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,
                                                  sigma_dA_spline,sigma_dphi_spline,
-                                                 mass_1,mass_2,xi_high,psd_data,gamma)
+                                                 mass_1,mass_2,xi_high,ref_amplitude,psd_data,gamma)
     
     model_strain['plus'] *= waveform_correction
     model_strain['cross'] *= waveform_correction
