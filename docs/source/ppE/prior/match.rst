@@ -3,7 +3,7 @@ match
 
 .. code-block:: python
 
-  GWCorrect.ppE.prior.match(signal,data,duration,PSDs=None)
+  GWCorrect.ppE.prior.match(waveform_1,waveform_2,injection)
 
 Computes the normalized match between two waveforms.
 
@@ -13,14 +13,12 @@ Computes the normalized match between two waveforms.
 
 Parameters:
 -----------
-signal: numpy.ndarray
-    strain array of the first gravitational wave
-data: numpy.ndarray
-    strain array of the second gravitational wave
-duration: float
-    time duration of the gravitational waves 
-PSDs: numpy.ndarray, optional, (None)
-    array of power spectral densities to weight the waveforms
+waveform_1: bilby.gw.WaveformGenerator
+    bilby waveform generator object
+waveform_2: bilby.gw.WaveformGenerator
+    bilby waveform generator object
+injection: dict
+    dictionary of source parameters to be put into the waveform generators 
 
 Returns:
 --------
