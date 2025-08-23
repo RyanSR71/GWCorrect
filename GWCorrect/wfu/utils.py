@@ -57,9 +57,9 @@ def smooth_interpolation(full_grid,nodes,parameters,gamma):
 
 
 
-def variable_prior(uncertainty,k,xi_low,xi_high):
+def variable_prior(uncertainty,k,xi_min,xi_max):
     frequency_grid = np.linspace(0.001,1,len(uncertainty))
-    desired_frequency_nodes = np.geomspace(xi_low,xi_high,k+1)
+    desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
     
     indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
     frequency_nodes = np.array(frequency_grid[indexes])
@@ -70,10 +70,10 @@ def variable_prior(uncertainty,k,xi_low,xi_high):
 
 
 
-def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_high,ref_amplitude,psd_data,gamma):
+def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_max,gamma):
     n = len(dAs)-1
     total_mass = mass_1+mass_2
-    dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_high-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
+    dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
     frequency_nodes = dimensionless_frequency_nodes*203025.4467280836/total_mass
     if sigma_dA_spline is not None:
         sigma_dA = sigma_dA_spline(dimensionless_frequency_nodes)
@@ -85,18 +85,10 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
         sigma_dphi = np.ones(n+1)
     
     amplitude_correction = smooth_interpolation(frequency_array,frequency_nodes,dAs*sigma_dA,gamma)
-
-    if psd_data is not None:
-        psd_data_interp = np.interp(frequency_array,psd_data[:,0],psd_data[:,1])
-        weights = (ref_amplitude**2)/psd_data_interp
-        linear_fit = np.polyfit(frequency_array,smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma),1,w=weights)
-        phase_correction_coefs = np.poly1d(linear_fit)(frequency_nodes)
-    else:
-        phase_correction_coefs = np.zeros(len(dphis))
-        
-    phase_correction = smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi-phase_correction_coefs,gamma)
+    phase_correction = smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma)
     
     waveform_correction = (1+amplitude_correction)*np.exp(phase_correction*1j)
+    
     return waveform_correction
 
 
@@ -125,7 +117,7 @@ def maxL(result):
 
 
 
-def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_low,xi_high,desc):
+def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc):
     lower_xis = []
     upper_xis = []
     log = logging.getLogger(__name__)
@@ -135,7 +127,7 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_low,xi_high,des
     for trial in tqdm.tqdm(range(samples), desc = desc):
         roots = []
         injection = prior.sample()
-        geometrized_frequency_grid = np.geomspace(xi_low,xi_high,1000)
+        geometrized_frequency_grid = np.geomspace(xi_min,xi_max,1000)
         amplitude = np.abs(waveform_generator.frequency_domain_strain(parameters=injection)['plus'])
         M = bilby.gw.conversion.generate_mass_parameters(injection)['total_mass']
         freqs = waveform_generator.frequency_array/float(203025.4467280836/M)
@@ -147,7 +139,7 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_low,xi_high,des
         spline = scipy.interpolate.CubicSpline(geometrized_frequency_grid[nodes],parameters)
         roots = spline.roots()
         try:
-            if roots[0] >= xi_low and roots[-1] <= xi_high:
+            if roots[0] >= xi_min and roots[-1] <= xi_max:
                 lower_xis.append(roots[0])
                 upper_xis.append(roots[-1])
         except:
@@ -157,21 +149,21 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_low,xi_high,des
 
 
 def xi_0_upper_bound(n, **kwargs):
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     def f(x):
-        return x**(1-n) + (xi_low**(1-n)/(xi_high-xi_low))*x - ((xi_high*xi_low**(1-n))/(xi_high-xi_low))
-    # we need to have the lower bound slightly larger than xi_low, so we multiply by 1.000001 arbitrarily
-    root = scipy.optimize.brentq(f, 1.000001*xi_low, xi_high)
+        return x**(1-n) + (xi_min**(1-n)/(xi_max-xi_min))*x - ((xi_max*xi_min**(1-n))/(xi_max-xi_min))
+    # we need to have the lower bound slightly larger than xi_min, so we multiply by 1.000001 arbitrarily
+    root = scipy.optimize.brentq(f, 1.000001*xi_min, xi_max)
     return root
 
 
 
-def delta_xi_tilde_lower_bound(n,f_low,duration,**kwargs):
-    xi_low = kwargs.get('xi_low',0.018)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+def delta_xi_tilde_lower_bound(n,minimum_frequency,duration,**kwargs):
+    xi_min = kwargs.get('xi_min',0.018)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     
-    minimum = (xi_low/(xi_high-xi_low))*(4/(duration*f_low))**n
+    minimum = (xi_min/(xi_max-xi_min))*(4/(duration*minimum_frequency))**n
     
     return minimum
 
