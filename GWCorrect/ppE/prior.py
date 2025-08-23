@@ -3,6 +3,7 @@ import bilby
 import logging
 import tqdm
 import pycbc
+import pycbc.filter
 from ..wfu.utils import ProgressBar
 import matplotlib.pyplot as plt
 from pesummary.gw.file.strain import StrainData
