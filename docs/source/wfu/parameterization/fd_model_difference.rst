@@ -18,7 +18,7 @@ Generates frequency domain waveform differences between two models hf1 and hf2.
 .. math::
 
    \Delta\phi_{\mu}(f;\vartheta)= \begin{cases} 
-      \phi_2(f;\vartheta)-\phi_1(f;\vartheta)-2\pi f\Delta t_c-\Delta\phi_c & f \leq f_{\mathrm{disc}} \\
+      \phi_2(f;\vartheta)-\phi_1(f;\vartheta)-2\pi ft_0-\phi_0 & f \leq f_{\mathrm{disc}} \\
       \Delta\phi_\mu(f_{\mathrm{disc}};\vartheta) & f > f_{\mathrm{disc}} 
    \end{cases}
 
