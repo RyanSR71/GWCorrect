@@ -4,7 +4,7 @@ match_plot
 .. code-block:: python
 
   GWCorrect.ppE.prior.match_plot(ppE_waveform_generator,GR_waveform_generator,injection,
-  beta_tildes,delta_epsilon_tildes,PSDs=None,save=False,path=None,levels=numpy.linspace(0,1,21))
+  beta_tildes,delta_epsilon_tildes,PSDs=None,save=False,path=None,levels=None)
 
 Generates a contour plot displaying the match between a ppE waveform and a GR waveform at different values of beta_tilde and delta_epsilon_tilde.
 
@@ -26,7 +26,7 @@ save: bool, optional, (False)
     whether or not to save the contour plot; will be saved as a png image
 path: string, optional, (None)
     path to send the saved image; if None, saves to default path
-levels: numpy.ndarray, optional, (numpy.linspace(0,1,21))
+levels: numpy.ndarray, optional, (None)
     array of levels for the contour plot
 
 Returns:
