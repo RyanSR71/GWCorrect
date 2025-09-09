@@ -74,7 +74,8 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
     n = len(dAs)-1
     total_mass = mass_1+mass_2
     dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
-    frequency_nodes = dimensionless_frequency_nodes*203025.4467280836/total_mass
+    dimensionless_frequency_array = np.linspace(dimensionless_frequency_nodes[0],dimensionless_frequency_nodes[-1],len(frequency_array))
+    
     if sigma_dA_spline is not None:
         sigma_dA = sigma_dA_spline(dimensionless_frequency_nodes)
     else: 
@@ -84,8 +85,11 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
     else:
         sigma_dphi = np.ones(n+1)
     
-    amplitude_correction = smooth_interpolation(frequency_array,frequency_nodes,dAs*sigma_dA,gamma)
-    phase_correction = smooth_interpolation(frequency_array,frequency_nodes,dphis*sigma_dphi,gamma)
+    amplitude_correction = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,dAs*sigma_dA,gamma)
+    amplitude_correction = np.interp(frequency_array,dimensionless_frequency_array*203025.4467280836/total_mass,amplitude_correction)
+    
+    phase_correction = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,dphis*sigma_dphi,gamma)
+    phase_correction = np.interp(frequency_array,dimensionless_frequency_array*203025.4467280836/total_mass,phase_correction)
     
     waveform_correction = (1+amplitude_correction)*np.exp(phase_correction*1j)
     
