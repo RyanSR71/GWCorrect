@@ -13,151 +13,7 @@ from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
 
 
 
-def dphi_prior(phase_uncertainty,k, **kwargs):
-    '''
-    Generates a Gaussian prior for the phase correction parameters for the BasicCorrectionModel
-    
-    Parameters
-    ===================
-    phase_uncertainty: numpy.ndarray
-        array of standard deviation of a set of phase differences; by default, this should be as a function of dimensionless frequency, xi
-    k: int
-        number of phase correction parameters desired
-    mean_phase_difference: numpy.ndarray, optional
-        array of the means of a set of phase differences, by default, this should be as a function of dimensionless frequency, xi
-        default: None
-    prior: bilby.core.prior.PriorDict, optional
-        bilby prior object; if given, dphi priors will be added to this dictionary
-        default: None
-    dimensionless: bool, optional
-        if True, will return dimensionless frequency nodes; if False, normal frequency nodes (Hz)
-        default: True
-    xi_min: float, optional
-        if dimensionless is True; lower bound on the dimensionless frequency band
-        default: 0.018
-    xi_max: float, optional
-        if dimensionless is True; upper bound on the dimensionless frequency band
-        default: 1/pi (0.318...)
-    minimum_frequency: float, optional
-        if dimensionless is False; lower bound on the normal frequency band
-        default: 20.0 Hz
-    maximum_frequency: float, optional
-        if dimensionless is False; upper bound on the normal frequency band
-        default: 1024.0 Hz
-        
-    Returns
-    ==================
-    frequency_nodes: numpy.ndarray
-        array of frequency nodes
-    prior: bilby.core.prior.PriorDict
-        bilby prior object containing the phase correction priors
-    '''
-    minimum_frequency = kwargs.get('minimum_frequency',20)
-    maximum_frequency = kwargs.get('maximum_frequency',1024)
-    xi_min = kwargs.get('xi_min',0.018)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    prior = kwargs.get('prior',None)
-    dimensionless = kwargs.get('dimensionless',True)
-    mean_phase_difference = kwargs.get('mean_phase_difference',None)
-    
-    if prior is None:
-        prior = bilby.core.prior.PriorDict()
-    
-    if mean_phase_difference is None:
-        mean_phase_difference = np.array([0]*len(phase_uncertainty))
-    
-    if dimensionless is True:
-        frequency_grid = np.linspace(0.001,1,len(phase_uncertainty))
-        desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
-    else:
-        frequency_grid = np.linspace(minimum_frequency,maximum_frequency,len(phase_uncertainty))
-        desired_frequency_nodes = np.geomspace(minimum_frequency,maximum_frequency,k+1)
-        
-    indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
-    frequency_nodes = np.array(frequency_grid[indexes])
-
-    prior['dphi_0'] = bilby.core.prior.DeltaFunction(name='dphi_0',latex_label=r'$\varphi_0$',peak=0)
-    for i in list(range(len(frequency_nodes)))[1:]:
-        prior[f'dphi_{i}'] = bilby.core.prior.Gaussian(name=f'dphi_{i}',latex_label=r'$\varphi_num$'.replace('num',str(i)),
-                                                     mu=mean_phase_difference[indexes[i]],sigma=phase_uncertainty[indexes[i]])
-    
-    return frequency_nodes, prior
-
-
-
-def dA_prior(amplitude_uncertainty,k, **kwargs):
-    '''    
-    Generates a Gaussian prior for the amplitude correction parameters for the BasicCorrectionModel
-     
-    Parameters
-    ===================
-    amplitude_uncertainty: numpy.ndarray
-        array of standard deviation of a set of amplitude differences; by default, this should be as a function of dimensionless frequency, xi
-    k: int
-        number of amplitude correction parameters desired
-    mean_amplitude_difference: numpy.ndarray, optional
-        array of the means of a set of amplitude differences, by default, this should be as a function of dimensionless frequency, xi
-        default: None
-    prior: bilby.core.prior.PriorDict, optional
-        bilby prior object; if given, dA priors will be added to this dictionary
-        default: None
-    dimensionless: bool, optional
-        if True, will return dimensionless frequency nodes; if False, normal frequency nodes (Hz)
-        default: True
-    xi_min: float, optional
-        if dimensionless is True; lower bound on the dimensionless frequency band
-        default: 0.018
-    xi_max: float, optional
-        if dimensionless is True; upper bound on the dimensionless frequency band
-        default: 1/pi (0.318...)
-    minimum_frequency: float, optional
-        if dimensionless is False; lower bound on the normal frequency band
-        default: 20.0 Hz
-    maximum_frequency: float, optional
-        if dimensionless is False; upper bound on the normal frequency band
-        default: 1024.0 Hz
-        
-    Returns
-    ==================
-    frequency_nodes: numpy.ndarray
-        array of frequency nodes
-    prior: bilby.core.prior.PriorDict
-        bilby prior object containing the amplitude correction priors
-    '''    
-    minimum_frequency = kwargs.get('minimum_frequency',20)
-    maximum_frequency = kwargs.get('maximum_frequency',1024)
-    xi_min = kwargs.get('xi_min',0.018)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    prior = kwargs.get('prior',None)
-    dimensionless = kwargs.get('dimensionless',True)
-    mean_amplitude_difference = kwargs.get('mean_amplitude_difference',None)
-    
-    if prior is None:
-        prior = bilby.core.prior.PriorDict()
-    
-    if mean_amplitude_difference is None:
-        mean_amplitude_difference = np.array([0]*len(amplitude_uncertainty))
-    
-    if dimensionless is True:
-        frequency_grid = np.linspace(0.001,1,len(amplitude_uncertainty))
-        desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
-    else:
-        frequency_grid = np.linspace(minimum_frequency,maximum_frequency,len(amplitude_uncertainty))
-        desired_frequency_nodes = np.geomspace(minimum_frequency,maximum_frequency,k+1)
-        
-    indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
-    frequency_nodes = np.array(frequency_grid[indexes])
-
-    prior['dA_0'] = bilby.core.prior.DeltaFunction(name='dA_0',latex_label=r'$\alpha_0$',peak=0)
-    for i in list(range(len(frequency_nodes)))[1:]:
-        prior[f'dA_{i}'] = bilby.core.prior.Gaussian(name=f'dA_{i}',latex_label=r'$\alpha_num$'.replace('num',str(i)),
-                                                     mu=mean_amplitude_difference[indexes[i]],sigma=amplitude_uncertainty[indexes[i]])
-    
-    return frequency_nodes, prior
-
-
-
-def xi_priors(waveform_generator,prior,psd_data,n,minimum_frequency,**kwargs):
+def xi_priors(waveform_generator,prior,psd_data,n,**kwargs):
     '''
     Generates xi_0 and delta_xi_tilde priors from a BBH/BNS/NSBH prior and adds them to the original prior.
 
@@ -171,8 +27,6 @@ def xi_priors(waveform_generator,prior,psd_data,n,minimum_frequency,**kwargs):
         array of power spectral density data; first column needs to be the frequency points and the second column needs to be the data
     n: int
         number of frequency nodes
-    minimum_frequency: float
-        lower bound on the frequency band (Hz)
     xi_0_latex_label: string, optional
         latex label for xi_0
         default: r'$xi_0$'
@@ -206,11 +60,11 @@ def xi_priors(waveform_generator,prior,psd_data,n,minimum_frequency,**kwargs):
     
     prior['xi_0'] = TFDG(name='xi_0',latex_label=xi_0_latex_label,
                         mu_1=mu_1,mu_2=mu_2,sigma_1=sigma_1,sigma_2=sigma_2,
-                        minimum=xi_min,maximum=xi_0_upper_bound(n,xi_min=xi_min,xi_max=xi_max))
+                        minimum=xi_min,maximum=xi_max)
     
     prior['delta_xi_tilde'] = EHG(name='delta_xi_tilde',latex_label=delta_xi_tilde_latex_label,
                                   mu=mu_3,sigma=sigma_3,maximum=1,
-                                  minimum=delta_xi_tilde_lower_bound(n,minimum_frequency,waveform_generator.duration,xi_min=xi_min,xi_max=xi_max))
+                                  minimum=0)
     
     return prior
 
@@ -276,5 +130,77 @@ def total_mass_conversion(parameters):
         input parameters, but with the total mass added
     '''
     parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    
+    return parameters
+
+
+
+def full_conversion(parameters,minimum_frequency,maximum_frequency,xi_max,n,sigma_dphi_spline):
+    '''
+    Conversion function to generate the total mass, time shift, phase shift, and frequency node constraints from a set of parameters;
+    Necessary for the use of the constraint priors
+    
+    Parameters
+    ==================
+    parameters: dict
+        dictionary of binary black hole parameters
+    minimum_frequency: float
+        lower bound on the frequency band (Hz)
+    maximum_frequency: float
+        upper bound on the frequency band (Hz)
+    xi_max: float
+        absolute upper bound on dimensionless frequency
+    n: int
+        number of frequency nodes (excluding the zeroth)
+    sigma_dphi_spline: scipy.interpolate.CubicSpline
+        spline object representing the standard deviation of phase model differences in dimensionless frequency
+    
+    Returns
+    ==================
+    parameters: dict
+        input parameters, but with the constraint parameters added
+    '''
+    total_mass = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    
+    if hasattr(total_mass,"__len__"):
+        row_number = len(total_mass)
+    else:
+        row_number = 1
+    
+    constraint_matrix = np.zeros((row_number,2*n+12))
+
+    constraint_matrix[:,0] = total_mass   
+    constraint_matrix[:,1] = parameters['xi_0']
+    constraint_matrix[:,2] = parameters['delta_xi_tilde']
+    for k in range(1,n+1):
+        constraint_matrix[:,n+7+k] = parameters[f'dphi_{k}']
+
+    for i in range(row_number):
+        constraint_matrix[i,3] = minimum_frequency
+        constraint_matrix[i,n+5] = maximum_frequency
+        for j in range(4,n+5):
+            constraint_matrix[i,j] = (203025.4467280836*constraint_matrix[i,1]/constraint_matrix[i,0])*(1+((xi_max-constraint_matrix[i,1])/constraint_matrix[i,1])*constraint_matrix[i,2])**((j-4)/n)
+            constraint_matrix[i,j+n+3] *= sigma_dphi_spline(4.925490947641267e-06*constraint_matrix[i,0]*constraint_matrix[i,j])
+        constraint_matrix[i,2*n+8] = constraint_matrix[i,2*n+7]
+        frequency_nodes = constraint_matrix[i][3:n+6]
+        dphis = constraint_matrix[i][n+6:2*n+9]
+        constraint_matrix[i][2*n+9],constraint_matrix[i][2*n+10] = np.polyfit(frequency_nodes,dphis,1)
+        constraint_matrix[i][2*n+9] *= 1/(2*np.pi)
+        constraint_matrix[i][2*n+11] = 1/(constraint_matrix[i,5]-constraint_matrix[i,4])
+
+    t_dphi = constraint_matrix[:,2*n+9]
+    phi_dphi = constraint_matrix[:,2*n+10]
+    delta_t_01 = constraint_matrix[:,2*n+11]
+    
+    if row_number == 1:
+        parameters['total_mass'] = float(total_mass)
+        parameters['t_dphi'] = float(t_dphi)
+        parameters['phi_dphi'] = float(phi_dphi)
+        parameters['delta_t_01'] = float(delta_t_01)
+    else:    
+        parameters['total_mass'] = total_mass
+        parameters['t_dphi'] = t_dphi
+        parameters['phi_dphi'] = phi_dphi
+        parameters['delta_t_01'] = delta_t_01
     
     return parameters
