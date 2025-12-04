@@ -28,14 +28,6 @@ class ProgressBar(logging.Handler):
 
 
 
-def td_waveform(fd_waveform,sampling_frequency):
-    reversed_fd_waveform = fd_waveform[::-1]
-    total_fd_strain = np.concatenate((fd_waveform,np.conjugate(reversed_fd_waveform[1:-1])))
-    td_waveform = sampling_frequency*np.real(np.fft.ifft(total_fd_strain))
-    return td_waveform
-
-
-
 def smooth_interpolation(full_grid,nodes,parameters,gamma):
     spline = scipy.interpolate.interp1d(nodes,parameters)(nodes)
     temp_grid = np.geomspace(full_grid[1],full_grid[-1],200)
@@ -153,27 +145,6 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc
         except:
             pass
     return lower_xis, upper_xis
-
-
-
-def xi_0_upper_bound(n, **kwargs):
-    xi_min = kwargs.get('xi_min',0.018)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    def f(x):
-        return x**(1-n) + (xi_min**(1-n)/(xi_max-xi_min))*x - ((xi_max*xi_min**(1-n))/(xi_max-xi_min))
-    # we need to have the lower bound slightly larger than xi_min, so we multiply by 1.000001 arbitrarily
-    root = scipy.optimize.brentq(f, 1.000001*xi_min, xi_max)
-    return root
-
-
-
-def delta_xi_tilde_lower_bound(n,minimum_frequency,duration,**kwargs):
-    xi_min = kwargs.get('xi_min',0.018)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    
-    minimum = (xi_min/(xi_max-xi_min))*(4/(duration*minimum_frequency))**n
-    
-    return minimum
 
 
 
