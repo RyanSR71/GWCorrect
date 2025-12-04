@@ -5,7 +5,7 @@ import time
 import sys
 import scipy
 import lal
-from .utils import A_ASD_solutions, TFDG, EHG, xi_0_upper_bound, delta_xi_tilde_lower_bound
+from .utils import A_ASD_solutions, TFDG, EHG
 from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
