@@ -204,3 +204,33 @@ def full_conversion(parameters,minimum_frequency,maximum_frequency,xi_max,n,sigm
         parameters['delta_t_01'] = delta_t_01
     
     return parameters
+
+
+
+def conversion(parameters,xi_max,n):
+    '''
+    Conversion function to generate the total mass and frequency node constraint from a set of parameters;
+    Necessary for the use of the constraint priors
+    
+    Parameters
+    ==================
+    parameters: dict
+        dictionary of binary black hole parameters
+    xi_max: float
+        absolute upper bound on dimensionless frequency
+    n: int
+        number of frequency nodes (excluding the zeroth)
+    
+    Returns
+    ==================
+    parameters: dict
+        input parameters, but with the constraint parameters added
+    '''
+    total_mass = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    
+    delta_t_01 = 1/((203025.4467280836/total_mass)*parameters['xi_0']*((1+((xi_max-parameters['xi_0'])/parameters['xi_0'])*parameters['delta_xi_tilde'])**(1/n)-1))
+
+    parameters['total_mass'] = total_mass
+    parameters['delta_t_01'] = delta_t_01
+    
+    return parameters
