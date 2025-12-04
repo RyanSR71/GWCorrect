@@ -143,9 +143,13 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc
         spline = scipy.interpolate.CubicSpline(geometrized_frequency_grid[nodes],parameters)
         roots = spline.roots()
         try:
-            if roots[0] >= xi_min and roots[-1] <= xi_max:
-                lower_xis.append(roots[0])
-                upper_xis.append(roots[-1])
+            if roots[0] > 0 and roots[-1] < 1/np.pi:
+                if len(roots)>1:
+                    lower_xis.append(roots[0])
+                    upper_xis.append(roots[-1])
+                else:
+                    lower_xis.append(xi_min)
+                    upper_xis.append(roots[0])
         except:
             pass
     return lower_xis, upper_xis
