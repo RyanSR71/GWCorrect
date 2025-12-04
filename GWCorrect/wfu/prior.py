@@ -57,10 +57,15 @@ def xi_priors(waveform_generator,prior,psd_data,n,**kwargs):
     delta_xi_tildes = (np.array(upper_xis)-np.array(lower_xis))/(xi_max-np.array(lower_xis))
     
     mu_3,sigma_3 = scipy.stats.norm.fit(delta_xi_tildes)
-    
-    prior['xi_0'] = TFDG(name='xi_0',latex_label=xi_0_latex_label,
-                        mu_1=mu_1,mu_2=mu_2,sigma_1=sigma_1,sigma_2=sigma_2,
-                        minimum=xi_min,maximum=xi_max)
+
+    if mu_1 > xi_min:
+        prior['xi_0'] = TFDG(name='xi_0',latex_label=xi_0_latex_label,
+                            mu_1=mu_1,mu_2=mu_2,sigma_1=sigma_1,sigma_2=sigma_2,
+                            minimum=xi_min,maximum=xi_max)
+    else:
+        prior['xi_0'] = EHG(name='xi_0',latex_label=xi_0_latex_label,
+                            mu=mu_2,sigma=sigma_2,
+                            minimum=xi_min,maximum=xi_max)
     
     prior['delta_xi_tilde'] = EHG(name='delta_xi_tilde',latex_label=delta_xi_tilde_latex_label,
                                   mu=mu_3,sigma=sigma_3,maximum=1,
