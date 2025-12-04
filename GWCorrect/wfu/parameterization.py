@@ -101,7 +101,10 @@ def fd_model_difference(hf1,hf2,**kwargs):
     
     # fitting a line to unaligned_phase_difference weighted by PSDs and subtracting off that line
     if psd_data is None:
-        psd_data = np.loadtxt('https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_GW170817_PSDs.dat',comments='#')
+        # loading in O4 asd data and converting to psd data
+        asd_data = np.loadtxt('https://dcc.ligo.org/public/0165/T2000012/002/aligo_O4high.txt',comments='#')
+        psd_data = asd_data.copy()
+        psd_data[:,1] = psd_data[:,1]**2
     if ref_amplitude is None:
         ref_amplitude = np.abs(hf1.frequency_domain_strain()[polarization][frequency_indexes][0:final_index])
     ref_amplitude = np.interp(frequency_grid[0:final_index],maximum_frequency*np.linspace(0,1,len(ref_amplitude)),ref_amplitude)
