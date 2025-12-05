@@ -125,7 +125,7 @@ def fd_model_difference(hf1,hf2,**kwargs):
 
 def parameterization(hf1,hf2,prior,nsamples,**kwargs):
     '''
-    Generates samples of waveform uncertainty between two approximants and parameterizes the data with Chebyshev polynomial functions.
+    Generates samples of waveform differences between two models and parameterizes the data with Cubic splines.
 
     Parameters
     ==================
