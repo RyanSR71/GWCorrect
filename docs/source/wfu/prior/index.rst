@@ -6,5 +6,5 @@ Prior
   :caption: GWCorrect.wfu.prior
 
   TotalMassConstraint
-  total_mass_conversion
+  conversion
   xi_priors
