@@ -8,7 +8,6 @@ build:
 python:
   install:
     - method: pip
-    - path: docs/get-pip.py
     - requirements: docs/requirements.txt
     
 
