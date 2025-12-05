@@ -196,7 +196,10 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         injection = prior.sample()
         
         # calculating waveform model differences
-        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,npoints=npoints,polarization=polarization,psd_data=psd_data,correction_parameter=correction_parameter,ref_amplitude=ref_amplitude)
+        frequency_grid,amplitude_difference,phase_difference = fd_model_difference(hf1,hf2,injection=injection,npoints=npoints,
+                                                                                   polarization=polarization,psd_data=psd_data,
+                                                                                   correction_parameter=correction_parameter,
+                                                                                   ref_amplitude=ref_amplitude)
 
         spline_indexes = np.linspace(0,len(frequency_grid)-1,int(spline_resolution*len(frequency_grid))).astype(int)
         frequency_nodes = frequency_grid[spline_indexes]
