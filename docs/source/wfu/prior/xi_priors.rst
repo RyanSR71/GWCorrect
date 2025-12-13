@@ -9,16 +9,14 @@ xi_priors
 Generates xi_0 and delta_xi_tilde priors from a BBH prior and adds them to the original prior.
 
 .. math::
-
    2\mathcal{A}(\xi;\vartheta)\sqrt{\frac{c^3\xi}{GM}}-\sqrt{S_n(\xi)}=0
 
 .. math::
-
   \Pi(\xi_0)=\mathrm{TFDG}(\mu_1,\mu_2,\sigma_1,\sigma_2,\xi_\mathrm{min},\xi_\mathrm{max}),\ \Pi(\xi_0)=\mathrm{EHG}(\mu,\sigma,\xi_\mathrm{min},\xi_\mathrm{max})
 
 .. math::
-
    \Pi(\delta\tilde\xi)=\mathrm{EHG}(\mu,\sigma,0,1)                                                                                             
+
 
 Parameters:
 -----------
