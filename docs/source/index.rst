@@ -29,4 +29,4 @@ This package relies on: `bilby <https://bilby-dev.github.io/bilby/index.html>`_,
    ppE/index
 
 .. meta::
-   :google_verification: <meta name="google-site-verification" content="IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs" />
+   <meta name="google-site-verification" content="IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs" />
