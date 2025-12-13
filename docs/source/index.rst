@@ -1,5 +1,5 @@
 .. meta::
-   <meta name="google-site-verification" content="IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs" />
+   :google-site-verification <IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs>
 
 Welcome to GWCorrect's documentation!
 =====================================
