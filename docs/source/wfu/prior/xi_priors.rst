@@ -6,7 +6,7 @@ xi_priors
    GWCorrect.wfu.prior.xi_priors(waveform_generator,prior,psd_data,n,minimum_frequency,xi_min=0.018,
    xi_max=1/np.pi,xi_0_latex_label=r'$\xi_0$',delta_xi_tilde_latex_label=r'$\delta\tilde\xi$')
 
-Generates xi_0 and delta_xi_tilde priors from a BBH/BNS/NSBH prior and adds them to the original prior.
+Generates xi_0 and delta_xi_tilde priors from a BBH prior and adds them to the original prior.
 
 .. math::
 
@@ -14,19 +14,11 @@ Generates xi_0 and delta_xi_tilde priors from a BBH/BNS/NSBH prior and adds them
 
 .. math::
 
-  \Pi(\xi_0)=\mathrm{TFDG}(\mu_1,\mu_2,\sigma_1,\sigma_2,\xi_\mathrm{min},x)
+  \Pi(\xi_0)=\mathrm{TFDG}(\mu_1,\mu_2,\sigma_1,\sigma_2,\xi_\mathrm{min},\xi_\mathrm{max}),\ \Pi(\xi_0)=\mathrm{EHG}(\mu,\sigma,\xi_\mathrm{min},\xi_\mathrm{max})
 
 .. math::
 
-  x^{1-n}+\left(\frac{\xi_\mathrm{min}^{1-n}}{\xi_\mathrm{max}-\xi_\mathrm{min}}\right)x-\left(\frac{\xi_\mathrm{max}\xi_\mathrm{min}^{1-n}}{\xi_\mathrm{max}-\xi_\mathrm{min}}\right)=0,\ \xi_\mathrm{min}<x<\xi_\mathrm{max}
-
-.. math::
-
-   \Pi(\delta\tilde\xi)=\mathrm{EHG}(\mu,\sigma,y)
-
-.. math::
-
-  y=\frac{\xi_\mathrm{min}}{\xi_\mathrm{max}-\xi_\mathrm{min}}\left(\frac{4}{t_df_\mathrm{min}}\right)^n                                                                                                
+   \Pi(\delta\tilde\xi)=\mathrm{EHG}(\mu,\sigma,0,1)                                                                                             
 
 Parameters:
 -----------
