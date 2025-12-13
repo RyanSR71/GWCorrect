@@ -6,8 +6,7 @@ project = 'GWCorrect'
 copyright = '2025, Ryan Johnson - No Rights Reserved'
 author = 'Ryan Johnson'
 
-release = 'beta'
-version = '0.20.2'
+version = '1.0.0'
 
 # -- General configuration
 
