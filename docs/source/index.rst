@@ -1,3 +1,6 @@
+.. meta::
+   <meta name="google-site-verification" content="IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs" />
+
 Welcome to GWCorrect's documentation!
 =====================================
 
@@ -27,6 +30,3 @@ This package relies on: `bilby <https://bilby-dev.github.io/bilby/index.html>`_,
 
    wfu/index
    ppE/index
-
-.. meta::
-   <meta name="google-site-verification" content="IgwxvFJBW4t67HMJWbM1bx2dCEtdn8_lSaVh2kR8PIs" />
