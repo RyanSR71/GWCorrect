@@ -4,6 +4,6 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "GWCorrect"
-authors = [{name = "Ryan Johnson", email = "ryansr71@csu.fullerton.edu"},{name= "Marceline Bonilla", email = "gsbonilla@fullerton.edu"},{name = "Jocelyn Read", email = "jread@fullerton.edu"}]
+authors = [{name = "Ryan Johnson", email = "ryansr71@csu.fullerton.edu"},{name= "Marceline Bonilla", email = "msbonilla@marin.edu"},{name = "Jocelyn Read", email = "jread@fullerton.edu"}]
 dynamic = ["version", "description"]
 dependencies = ['numpy','bilby','scipy','lalsuite']
