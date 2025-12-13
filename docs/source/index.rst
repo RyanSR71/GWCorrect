@@ -4,13 +4,9 @@ Welcome to GWCorrect's documentation!
 Package version:
 |version|
 
-This package relies on bilby and is essentially an addon to bilby. For more information, check out `Bilby's Documentation <https://lscsoft.docs.ligo.org/bilby/index.html>`_. This work is in collaboration with and derived from past work by Dr. Jocelyn Read. See `Jocelyn Read 2023 Class. Quantum Grav. 40 135002 <https://arxiv.org/abs/2301.06630v2>`_.
+This package provides infrastructure and useful functions for modifying gravitational waveforms. With this package, you can correct waveforms for waveform uncertainty during parameter estimation runs (`Read 2023 <https://arxiv.org/abs/2301.06630v2>`_) and apply an inspiral phase correction to search for theories of gravity beyond general relativity (`Bonilla et. al. 2023 <https://journals.aps.org/prd/abstract/10.1103/PhysRevD.107.024015>`_). This work is in collaboration with and derived from past work by Dr. Jocelyn Read and Dr. Marceline Bonilla. 
 
-Check out the :doc:`installation` section for instructions. Tutorials are in the Tutorials tab and code documentation is in the API tab.
-
-.. note::
-
-   This project is under active development and may change drastically.
+This package relies on: `bilby <https://bilby-dev.github.io/bilby/index.html>`_, `PESummary <https://lscsoft.docs.ligo.org/pesummary/stable/index.html>`_, `pycbc <https://pycbc.org/pycbc/latest/html/>`_, `lal <https://lscsoft.docs.ligo.org/lalsuite/lal/modules.html>`_, `scipy <https://scipy.org/>`_, `numpy <https://numpy.org/>`_, `matplotlib <https://matplotlib.org/stable/index.html>`_, and `tqdm <https://tqdm.github.io/>`_.
 
 .. toctree::
    :maxdepth: 1
