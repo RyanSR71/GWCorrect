@@ -144,7 +144,8 @@ def conversion(parameters,xi_max,n):
     try:
         delta_t_01 = 1/((203025.4467280836/total_mass)*parameters['xi_0']*((1+((xi_max-parameters['xi_0'])/parameters['xi_0'])*parameters['delta_xi_tilde'])**(1/n)-1))
     except:
-        delta_t_01 = 0
+        # setting the default value to the smallest floating point number to avoid problems with the prior
+        delta_t_01 = 2.2250738585072014e-308
 
     parameters['total_mass'] = total_mass
     parameters['delta_t_01'] = delta_t_01
