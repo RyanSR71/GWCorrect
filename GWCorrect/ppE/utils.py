@@ -22,6 +22,14 @@ def one_sided_planck_taper(e, n, N):
     else:
         return 1.0
 
+def apply_tapering(td_waveform, e):
+    N = len(td_waveform)
+    bound = int(e * N)-1
+    tapered_waveform = td_waveform.copy()
+    for n in range (0, bound):
+        tapered_waveform[n] = one_sided_planck_taper(e, n, N) * td_waveform[n]
+    return tapered_waveform
+
 def inversion_function(a,b,x):
     if x < a:
         I = 1
