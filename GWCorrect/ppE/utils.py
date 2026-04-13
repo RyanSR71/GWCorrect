@@ -8,6 +8,20 @@ import lal
 import math
 from math import factorial
 
+def one_sided_planck_taper(e, n, N):
+    if n == 0:
+        return 0
+    
+    if n >= e * N:
+        return 1
+    
+    z_plus = N * e * (1.0 / n + 1.0 / (n - e * N))
+    
+    if n < e * N:
+        return 1.0 / (np.exp(z_plus) + 1.0)
+    else:
+        return 1.0
+
 def inversion_function(a,b,x):
     if x < a:
         I = 1
