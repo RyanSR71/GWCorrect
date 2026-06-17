@@ -140,14 +140,13 @@ def conversion(parameters,xi_max,n):
         input parameters, but with the constraint parameters added
     '''
     total_mass = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    parameters['total_mass'] = total_mass
 
     try:
-        delta_t_01 = 1/((203025.4467280836/total_mass)*parameters['xi_0']*((1+((xi_max-parameters['xi_0'])/parameters['xi_0'])*parameters['delta_xi_tilde'])**(1/n)-1))
+        #delta_t_01 = 1/((203025.4467280836/total_mass)*parameters['xi_0']*((1+((xi_max-parameters['xi_0'])/parameters['xi_0'])*parameters['delta_xi_tilde'])**(1/n)-1))
+        delta_t_01 = 0.0000049254909476*n*total_mass/((xi_max-parameters['xi_0'])*parameters['delta_xi_tilde'])
+        parameters['delta_t_01'] = delta_t_01
     except:
-        # setting the default value to the smallest floating point number to avoid problems with the prior
-        delta_t_01 = 2.2250738585072014e-308
-
-    parameters['total_mass'] = total_mass
-    parameters['delta_t_01'] = delta_t_01
+        pass
     
     return parameters
