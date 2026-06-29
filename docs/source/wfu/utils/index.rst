@@ -10,3 +10,4 @@ Utility Functions
   GC_waveform_correction
   delta_t_01
   A_ASD_solutions
+  gaussian
