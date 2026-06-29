@@ -3,24 +3,24 @@ conversion
 
 .. code-block:: python
 
-  GWCorrect.wfu.prior.conversion(parameters,xi_max,n)
+  GWCorrect.wfu.prior.conversion(parameters,n=None,xi_max=0.318)
 
-Computes the total mass and delta_t_01 from a set of system parameters. Used with the bilby.core.prior.PriorDict() function
+Conversion function needed to use the total_mass constraint prior and the delta_t_01 constraint prior (optional). Used with the bilby.core.prior.PriorDict() function
 
 .. math::
 
-  \Delta t_{01}\equiv\frac{1}{\mathrm{f}_1-\mathrm{f}_0}
+  \Delta t_{01}\equiv\frac{nGM}{c^3(\xi_\mathrm{max}-\xi_0)\delta\tilde\xi}
 
-Parameters:
------------
-parameters: dictionary
-  dictionary with binary black hole parameters
-xi_max: float
-  absolute upper bound on dimensionless frequency
-n: int
-  number of waveform correction parameters
+ Parameters:
+------------
+input_parameters: dict
+    dictionary of binary black hole source parameters and waveform correction parameters
+n: int, optional, (None)
+    number of frequency nodes excluding 0; if given, delta_t_01 will be calculated
+xi_max: float, optional, (1/pi, 0.318)
+    upper bound on the dimensionless frequency band
 
 Returns:
 --------
-parameters: dictionary
-  input dictionary, but with the total system mass and delta_t_01 added
+parameters: dict
+    input parameters plus total mass and delta_t_01 (if n is not None)
