@@ -5,73 +5,11 @@ import time
 import sys
 import scipy
 import lal
-from .utils import A_ASD_solutions, TFDG, EHG
+from .utils import A_ASD_solutions, gaussain_parameters_from_A_ASD_solutions
 from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
 from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
-
-
-
-def xi_priors(waveform_generator,prior,psd_data,n,**kwargs):
-    '''
-    Generates xi_0 and delta_xi_tilde priors from a BBH/BNS/NSBH prior and adds them to the original prior.
-
-    Parameters
-    ==================
-    waveform_generator: bilby.gw.WaveformGenerator
-        bilby waveform generator object
-    prior: bilby.core.prior.PriorDict
-        bilby prior dictionary
-    psd_data: numpy.ndarray
-        array of power spectral density data; first column needs to be the frequency points and the second column needs to be the data
-    n: int
-        number of frequency nodes
-    xi_0_latex_label: string, optional
-        latex label for xi_0
-        default: r'$xi_0$'
-    delta_xi_tilde_latex_label: string, optional
-        latex_label for delta_xi_tilde
-        default: r'$delta tilde xi$'
-    xi_min: float, optional
-        lower bound on the dimensionless frequency band
-        default: 0.018
-    xi_max: float, optional
-        upper bound on the dimensionless frequency band
-        default: 1/pi
-    samples: int, optional
-        number of draws of amplitude to take to generate the priors
-        default: 1000
-    '''
-    xi_0_latex_label = kwargs.get('xi_0_latex_label',r'$\xi_0$')
-    delta_xi_tilde_latex_label = kwargs.get('delta_xi_tilde_latex_label',r'$\delta\tilde\xi$')
-    xi_min = kwargs.get('xi_min',0.018)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    samples = kwargs.get('samples',1000)
-    
-    lower_xis, upper_xis = A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,'Generating Priors')
-    
-    mu_1,sigma_1 = scipy.stats.norm.fit(lower_xis)
-    mu_2,sigma_2 = scipy.stats.norm.fit(upper_xis)
-    
-    delta_xi_tildes = (np.array(upper_xis)-np.array(lower_xis))/(xi_max-np.array(lower_xis))
-    
-    mu_3,sigma_3 = scipy.stats.norm.fit(delta_xi_tildes)
-
-    if mu_1 > xi_min:
-        prior['xi_0'] = TFDG(name='xi_0',latex_label=xi_0_latex_label,
-                            mu_1=mu_1,mu_2=mu_2,sigma_1=sigma_1,sigma_2=sigma_2,
-                            minimum=xi_min,maximum=xi_max)
-    else:
-        prior['xi_0'] = EHG(name='xi_0',latex_label=xi_0_latex_label,
-                            mu=mu_2,sigma=sigma_2,
-                            minimum=xi_min,maximum=xi_max)
-    
-    prior['delta_xi_tilde'] = EHG(name='delta_xi_tilde',latex_label=delta_xi_tilde_latex_label,
-                                  mu=mu_3,sigma=sigma_3,maximum=1,
-                                  minimum=0)
-    
-    return prior
 
 
 
@@ -120,33 +58,40 @@ def TotalMassConstraint(*,name,minimum_frequency,maximum_frequency,**kwargs):
 
 
 
-def conversion(parameters,xi_max,n):
+def frequency_node_prior_parameters(waveform_generator,asd_data,prior,**kwargs):
     '''
-    Conversion function to generate the total mass and frequency node constraint from a set of parameters;
-    Necessary for the use of the constraint priors
-    
+    Generates gaussian parameters for the xi_0 and delta_xi_tilde truncated gaussian priors by comparing waveforms to detector noise.
+
     Parameters
     ==================
-    parameters: dict
-        dictionary of binary black hole parameters
-    xi_max: float
-        absolute upper bound on dimensionless frequency
-    n: int
-        number of frequency nodes (excluding the zeroth)
-    
+    waveform_generator: bilby.gw.waveform_generator.WaveformGenerator
+        bilby waveform generator object
+    asd_data: numpy.ndarray
+        array of amplitude spectral density data; assumes standard LIGO formatting
+    prior: bilby.core.prior.PriorDict
+        bilby prior object to draw BBH parameters from
+    samples: int, optional
+        number of waveforms to draw
+        default: 10000
+    xi_max: float, optional
+        upper bound on the dimensionless frequency grid
+        default: 1/pi, 0.318...
+
     Returns
     ==================
-    parameters: dict
-        input parameters, but with the constraint parameters added
+    mu_down: float
+        mean of the xi_0 prior
+    sigma_down: float
+        standard deviation of the xi_0 prior
+    mu: float
+        mean of the delta_xi_tilde prior
+    sigma: float
+        standard deviation of the delta_xi_tilde prior
     '''
-    total_mass = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
-    parameters['total_mass'] = total_mass
-
-    try:
-        #delta_t_01 = 1/((203025.4467280836/total_mass)*parameters['xi_0']*((1+((xi_max-parameters['xi_0'])/parameters['xi_0'])*parameters['delta_xi_tilde'])**(1/n)-1))
-        delta_t_01 = 0.0000049254909476*n*total_mass/((xi_max-parameters['xi_0'])*parameters['delta_xi_tilde'])
-        parameters['delta_t_01'] = delta_t_01
-    except:
-        pass
+    samples = kwargs.get('samples',10000)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     
-    return parameters
+    lower_xis, upper_xis = A_ASD_solutions(waveform_generator,asd_data,prior,samples,'Generating Distributions')
+    mu_down, sigma_down, _, _, mu, sigma = gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max)
+    
+    return mu_down, sigma_down, mu, sigma
