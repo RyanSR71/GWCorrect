@@ -3,7 +3,7 @@ LEHG
 
 .. code-block:: python
 
-  class GWCorrect.wfu.prior.EHG(mu,sigma,minimum,maximum,name=None,latex_label=None)
+  class GWCorrect.wfu.prior.LEHG(mu,sigma,minimum,maximum,name=None,latex_label=None)
 
 Left Extended Half Gaussian Prior: a truncated Gaussian prior that is uniform between the minimum and the mean
   - alternate prior for xi_0 if mu_down is less than xi_min
