@@ -10,3 +10,4 @@ Prior
   frequency_node_prior_parameters
   TFDG
   LEHG
+  REHG
