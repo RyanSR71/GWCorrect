@@ -10,7 +10,7 @@ Computes (1+dA)exp(idphi) from the frequency node and correction parameters.
 
 .. math::
 
-  (1+\Delta\mathcal{A}_\mathrm{SI}(f;\mathrm{A}))\exp(i\Delta\phi_\mathrm{SI}(f;\Phi)
+  (1+\Delta\mathcal{A}_\mathrm{SI}(f;\mathrm{A}))\exp(i\Delta\phi_\mathrm{SI}(f;\Phi))
 
 Parameters:
 -----------
