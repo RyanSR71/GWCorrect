@@ -7,3 +7,4 @@ Utility Functions
 
   ProgressBar
   smooth_interpolation
+  GC_waveform_correction
