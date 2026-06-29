@@ -1,5 +1,5 @@
-Waveform Uncertainty
-====================
+Waveform Uncertainty Correction
+===============================
 
 .. toctree::
    :maxdepth: 2
