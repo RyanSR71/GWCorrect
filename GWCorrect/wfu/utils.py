@@ -89,6 +89,29 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
 
 
 
+def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,**kwargs):
+    '''
+    Computes delta_t_01.
+
+    Parameters
+    ==================
+    xi_0: float
+        starting frequency node parameter
+    delta_xi_tilde: float
+        frequency node spacing parameter
+    total_mass: float
+        total system mass (m_1+m_2)
+    n: int
+        number of frequency nodes excluding 0
+    '''
+    xi_max = kwargs.get('xi_max',1/np.pi)
+
+    delta_t_01 = 0.000004925490947641267*n*total_mass/((xi_max-xi_0)*delta_xi_tilde)
+
+    return delta_t_01
+
+
+
 def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
     lower_xis = []
     upper_xis = []
