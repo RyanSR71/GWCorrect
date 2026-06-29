@@ -11,7 +11,7 @@ Conversion function needed to use the total_mass constraint prior and the delta_
 
   \Delta t_{01}\equiv\frac{nGM}{c^3(\xi_\mathrm{max}-\xi_0)\delta\tilde\xi}
 
- Parameters:
+Parameters:
 ------------
 input_parameters: dict
     dictionary of binary black hole source parameters and waveform correction parameters
