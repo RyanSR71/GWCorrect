@@ -72,6 +72,11 @@ def conversion(input_parameters,**kwargs):
     xi_max: float, optional
         upper bound on the dimensionless frequency band
         default: 1/np.pi
+
+    Returns
+    ==================
+    parameters: dict
+        input parameters plus total mass and delta_t_01 (if n is not None)
     '''
     n = kwargs.get('n',None)
     xi_max = kwargs.get('xi_max',1/np.pi)
