@@ -3,10 +3,10 @@
 # -- Project information
 
 project = 'GWCorrect'
-copyright = '2025, Ryan Johnson - No Rights Reserved'
+copyright = '2026, Ryan Johnson - No Rights Reserved'
 author = 'Ryan Johnson'
 
-version = '1.0.1'
+version = '1.1.0'
 
 # -- General configuration
 
