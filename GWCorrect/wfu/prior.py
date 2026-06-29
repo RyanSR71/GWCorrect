@@ -5,7 +5,7 @@ import time
 import sys
 import scipy
 import lal
-from .utils import A_ASD_solutions, gaussain_parameters_from_A_ASD_solutions
+from .utils import A_ASD_solutions, gaussain_parameters_from_A_ASD_solutions, delta_t_01
 from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
@@ -55,6 +55,32 @@ def TotalMassConstraint(*,name,minimum_frequency,maximum_frequency,**kwargs):
     total_mass_prior = bilby.core.prior.Constraint(name=name,latex_label=latex_label,minimum=xi_max*203025.4467280836/maximum_frequency, maximum=xi_min*203025.4467280836/minimum_frequency, unit=unit)
     
     return total_mass_prior
+
+
+
+def conversion(input_parameters,**kwargs):
+    '''
+    Conversion function needed to use the total_mass constraint prior and the delta_t_01 constraint prior.
+
+    Parameters
+    ==================
+    input_parameters: dict
+        dictionary of binary black hole source parameters and waveform correction parameters
+    n: int, optional
+        number of frequency nodes excluding 0; if given, delta_t_01 will be calculated
+        default: None
+    xi_max: float, optional
+        upper bound on the dimensionless frequency band
+        default: 1/np.pi
+    '''
+    n = kwargs.get('n',None)
+    xi_max = kwargs.get('xi_max',1/np.pi)
+    
+    parameters = input_parameters.copy()
+    parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    if n is not None:
+        parameters['delta_t_01'] = delta_t_01(parameters['xi_0'],parameters['delta_xi_tilde'],parameters['total_mass'],n,xi_max)
+    return parameters
 
 
 
