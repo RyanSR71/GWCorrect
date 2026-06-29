@@ -8,3 +8,4 @@ Waveform Uncertainty
    parameterization/index
    prior/index
    waveform_generator/index
+   utils/index
