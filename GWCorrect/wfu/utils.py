@@ -147,6 +147,11 @@ def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,xi_max):
         number of frequency nodes excluding 0
     xi_max: float
         upper bound on the dimensionless frequency band
+
+    Returns
+    ==================
+    delta_t_01: float
+        delta_t_01 value
     '''
     delta_t_01 = 0.000004925490947641267*n*total_mass/((xi_max-xi_0)*delta_xi_tilde)
 
