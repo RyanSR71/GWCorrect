@@ -18,7 +18,7 @@ Truncated Flattened Double Gaussian Prior: a double Gaussian prior that is unifo
 
 .. math::
 
-  N =\bigg(\sqrt{\frac{\pi}{2}}\bigg(\sigma_2\mathrm{erf}\left[\frac{b-\mu_2}{\sqrt{2}\sigma_2}\right]-\sigma_1\mathrm{erf}\left[\frac{a-\mu_1}{\sqrt{2}\sigma_1}\right]\bigg)+\mu_2-\mu_1\bigg)^{-1}
+  N =\left(\sqrt{\frac{\pi}{2}}\left(\sigma_2\mathrm{erf}\left[\frac{b-\mu_2}{\sqrt{2}\sigma_2}\right]-\sigma_1\mathrm{erf}\left[\frac{a-\mu_1}{\sqrt{2}\sigma_1}\right]\right)+\mu_2-\mu_1\right)^{-1}
 
 .. math::
 
