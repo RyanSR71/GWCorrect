@@ -11,3 +11,4 @@ Utility Functions
   delta_t_01
   A_ASD_solutions
   gaussian
+  gaussian_parameters_from_A_ASD_solutions
