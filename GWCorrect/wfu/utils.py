@@ -131,7 +131,7 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
 
 
 
-def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,**kwargs):
+def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,xi_max):
     '''
     Computes delta_t_01.
 
@@ -145,9 +145,9 @@ def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,**kwargs):
         total system mass (m_1+m_2)
     n: int
         number of frequency nodes excluding 0
+    xi_max: float
+        upper bound on the dimensionless frequency band
     '''
-    xi_max = kwargs.get('xi_max',1/np.pi)
-
     delta_t_01 = 0.000004925490947641267*n*total_mass/((xi_max-xi_0)*delta_xi_tilde)
 
     return delta_t_01
