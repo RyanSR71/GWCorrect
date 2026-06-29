@@ -1,5 +1,5 @@
-Progress Bar
-============
+ProgressBar
+===========
 
 .. code-block:: python
 
