@@ -95,3 +95,217 @@ def frequency_node_prior_parameters(waveform_generator,asd_data,prior,**kwargs):
     mu_down, sigma_down, _, _, mu, sigma = gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max)
     
     return mu_down, sigma_down, mu, sigma
+
+
+
+class TFDG(bilby.core.prior.Prior):
+    '''
+    Truncated Flattened Double Gaussian Prior: a double Gaussian prior that is uniform between the two means; alternate prior for xi_0 if mu_down is greater than xi_min
+        
+    Parameters
+    ==================
+    mu_1: float
+        mean for the first Gaussian
+    sigma_1: float
+        standard deviation for the first Gaussian
+    mu_2: float
+        mean for the second Gaussian
+    sigma_2: float
+        standard deviation for the second Gaussian
+    minimum: float
+        minimum value
+    maximum: float
+        maximum value
+
+    Returns
+    ==================
+    TFDG prior object that is compatible with bilby.
+    '''
+    def __init__(self,mu_1,mu_2,sigma_1,sigma_2,minimum,maximum,name=None, latex_label=None):
+        super(TFDG, self).__init__(
+            name=name,latex_label=latex_label,minimum=minimum,maximum=maximum
+        )
+        self.mu_1 = float(mu_1)
+        self.mu_2 = float(mu_2)
+        self.sigma_1 = float(sigma_1)
+        self.sigma_2 = float(sigma_2)
+        
+        
+    def prob(self, val):
+        in_region_1 = (val >= self.minimum) & (val <= self.mu_1)
+        in_region_2 = (val > self.mu_1) & (val < self.mu_2)
+        in_region_3 = (val >= self.mu_2) & (val <= self.maximum)
+        N = (-np.sqrt(np.pi/2)*self.sigma_1*scipy.special.erf((self.minimum-self.mu_1)/(np.sqrt(2)*self.sigma_1))+np.sqrt(np.pi/2)*self.sigma_2*scipy.special.erf((self.maximum-self.mu_2)/(np.sqrt(2)*self.sigma_2))+self.mu_2-self.mu_1)**-1
+        draw = N*np.exp(-0.5*((val-self.mu_1)/self.sigma_1)**2)*in_region_1+N*in_region_2+N*np.exp(-0.5*((val-self.mu_2)/self.sigma_2)**2)*in_region_3
+        return draw
+    
+    
+    def rescale(self, val):
+        N = (-np.sqrt(np.pi/2)*self.sigma_1*scipy.special.erf((self.minimum-self.mu_1)/(np.sqrt(2)*self.sigma_1))+np.sqrt(np.pi/2)*self.sigma_2*scipy.special.erf((self.maximum-self.mu_2)/(np.sqrt(2)*self.sigma_2))+self.mu_2-self.mu_1)**-1
+        A_1 = np.sqrt(np.pi/2)*N*self.sigma_1*scipy.special.erf((self.mu_1-self.minimum)/(np.sqrt(2)*self.sigma_1))
+        A_2 = N*(self.mu_2-self.mu_1)
+        
+        if hasattr(val, "__len__"):
+            draw = []
+            for v in val:
+        
+                in_region_1 = (v >= 0) & (v <= A_1)
+                in_region_2 = (v > A_1) & (v <= A_1+A_2)
+                in_region_3 = (v >= A_1+A_2) & (v <= 1)
+
+                if in_region_1:
+                    draw.append(np.sqrt(2)*self.sigma_1*scipy.special.erfinv((np.sqrt(2*np.pi)*v-np.pi*np.sqrt(2/np.pi)*A_1)/(np.pi*N*self.sigma_1))+self.mu_1)
+                elif in_region_2:
+                    draw.append((N*self.mu_1+v-A_1)/N)
+                elif in_region_3:
+                    draw.append(self.mu_2-np.sqrt(2)*self.sigma_2*scipy.special.erfinv((np.sqrt(2*np.pi)*A_1+np.sqrt(2*np.pi)*A_2-np.sqrt(2*np.pi)*v)/(np.pi*N*self.sigma_2)))
+                else:
+                    raise Exception('Draw Failed!')
+            return np.array(draw)
+        
+        else:
+            in_region_1 = (val >= 0) & (val <= A_1)
+            in_region_2 = (val > A_1) & (val <= A_1+A_2)
+            in_region_3 = (val >= A_1+A_2) & (val <= 1)
+
+            if in_region_1:
+                draw = np.sqrt(2)*self.sigma_1*scipy.special.erfinv((np.sqrt(2*np.pi)*val-np.pi*np.sqrt(2/np.pi)*A_1)/(np.pi*N*self.sigma_1))+self.mu_1
+            elif in_region_2:
+                draw = (N*self.mu_1+val-A_1)/N
+            elif in_region_3:
+                draw = self.mu_2-np.sqrt(2)*self.sigma_2*scipy.special.erfinv((np.sqrt(2*np.pi)*A_1+np.sqrt(2*np.pi)*A_2-np.sqrt(2*np.pi)*val)/(np.pi*N*self.sigma_2))
+            else:
+                raise Exception('Draw Failed!')
+            return draw
+
+
+
+class LEHG(bilby.core.prior.Prior):
+    '''
+    Left Extended Half Gaussian Prior: a truncated Gaussian prior that is uniform between the minimum and the mean; alternate prior for xi_0 if mu_down is less than xi_min; alternate prior for delta_xi_tilde
+        
+    Parameters
+    ==================
+    mu: float
+        mean
+    sigma: float
+        standard deviation
+    minimum: float
+        minimum value
+    maximum: float
+        maximum value
+
+    Returns
+    ==================
+    LEHG prior object that is compatible with bilby.
+    '''
+    def __init__(self,mu,sigma,minimum,maximum,name=None, latex_label=None):
+        super(LEHG, self).__init__(
+            name=name,latex_label=latex_label,minimum=minimum,maximum=maximum
+        )
+        self.mu = float(mu)
+        self.sigma = float(sigma)        
+        
+    def prob(self, val):
+        in_region_1 = (val >= self.minimum) & (val <= self.mu)
+        in_region_2 = (val > self.mu) & (val <= self.maximum)
+        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.maximum-self.mu)/(np.sqrt(2)*self.sigma))+self.mu-self.minimum)**-1
+        draw = N*in_region_1+N*np.exp(-0.5*((val-self.mu)/self.sigma)**2)*in_region_2
+        return draw
+            
+    
+    def rescale(self, val):
+        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.maximum-self.mu)/(np.sqrt(2)*self.sigma))+self.mu-self.minimum)**-1
+        A = N*(self.mu-self.minimum)
+        
+        if hasattr(val, "__len__"):
+            draw = []
+            for v in val:
+                in_region_1 = (v >= 0) & (v < A)
+                in_region_2 = (v >= A) & (v <= 1)
+
+                if in_region_1:
+                    draw.append((N*self.minimum+v)/N)
+                elif in_region_2:
+                    draw.append(self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.sqrt(2*np.pi)*A-np.sqrt(2*np.pi)*v)/(np.pi*N*self.sigma)))
+                else:
+                    raise Exception('Draw Failed!')
+            return np.array(draw)
+        
+        else:
+            in_region_1 = (val >= 0) & (val < A)
+            in_region_2 = (val >= A) & (val <= 1)
+
+            if in_region_1:
+                draw = ((N*self.minimum+val)/N)
+            elif in_region_2:
+                draw = (self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.sqrt(2*np.pi)*A-np.sqrt(2*np.pi)*val)/(np.pi*N*self.sigma)))
+            else:
+                raise Exception('Draw Failed!')
+            return draw
+
+
+
+class REHG(bilby.core.prior.Prior):
+    '''
+    Right Extended Half Gaussian Prior: a truncated Gaussian prior that is uniform between the mean and the maximum; alternate prior for delta_xi_tilde
+        
+    Parameters
+    ==================
+    mu: float
+        mean
+    sigma: float
+        standard deviation
+    minimum: float
+        minimum value
+    maximum: float
+        maximum value
+
+    Returns
+    ==================
+    REHG prior object that is compatible with bilby.
+    '''
+    def __init__(self,mu,sigma,minimum,maximum,name=None, latex_label=None):
+        super(REHG, self).__init__(
+            name=name,latex_label=latex_label,minimum=minimum,maximum=maximum
+        )
+        self.mu = float(mu)
+        self.sigma = float(sigma)        
+        
+    def prob(self, val):
+        in_region_1 = (val >= self.minimum) & (val <= self.mu)
+        in_region_2 = (val > self.mu) & (val <= self.maximum)
+        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.mu-self.minimum)/(np.sqrt(2)*self.sigma))+self.maximum-self.mu)**-1
+        draw = N*in_region_2+N*np.exp(-0.5*((self.mu-val)/self.sigma)**2)*in_region_1
+        return draw
+            
+    
+    def rescale(self, val):
+        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.mu-self.minimum)/(np.sqrt(2)*self.sigma))+self.maximum-self.mu)**-1
+        A = N*self.sigma*np.sqrt(np.pi/2)*scipy.special.erf((self.mu-self.minimum)/(np.sqrt(2)*self.sigma))
+        
+        if hasattr(val, "__len__"):
+            draw = []
+            for v in val:
+                in_region_1 = (v >= 0) & (v < A)
+                in_region_2 = (v >= A) & (v <= 1)
+
+                if in_region_1:
+                    draw.append(self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.pi*N*self.sigma*scipy.special.erf((self.mu-self.minimum)/(np.sqrt(2)*self.sigma))-np.sqrt(2*np.pi)*v)/(np.pi*N*self.sigma)))
+                elif in_region_2:
+                    draw.append(self.mu+(v-A)/N)
+                else:
+                    raise Exception('Draw Failed!')
+            return np.array(draw)
+        
+        else:
+            in_region_1 = (val >= 0) & (val < A)
+            in_region_2 = (val >= A) & (val <= 1)
+
+            if in_region_1:
+                draw = self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.pi*N*self.sigma*scipy.special.erf((self.mu-self.minimum)/(np.sqrt(2)*self.sigma))-np.sqrt(2*np.pi)*val)/(np.pi*N*self.sigma))
+            elif in_region_2:
+                draw = self.mu+(val-A)/N
+            else:
+                raise Exception('Draw Failed!')
+            return draw
