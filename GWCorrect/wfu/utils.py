@@ -15,6 +15,9 @@ from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
 
 
 class ProgressBar(logging.Handler):
+    '''
+    Progress bar utility function. To use, set this as your logger handler.
+    '''
     def __init__(self, level=logging.NOTSET):
         super().__init__(level)
 
@@ -29,6 +32,25 @@ class ProgressBar(logging.Handler):
 
 
 def smooth_interpolation(full_grid,nodes,parameters,gamma):
+    '''
+    Smooth interpolation function.
+
+    Parameters
+    ==================
+    full_grid: numpy.ndarray
+        array of points over which the smooth interpolation function is generated
+    nodes: numpy.ndarray
+        array of nodes (x_i)
+    parameters: numpy.ndarray
+        array of parameters corresponding with the nodes (y_i)
+    gamma: float
+        smoothing parameter
+
+    Returns
+    ==================
+    smooth_interpolation: numpy.ndarray
+        smooth_interpolation array that corresponds to the full_grid input
+    '''
     spline = scipy.interpolate.interp1d(nodes,parameters)(nodes)
     temp_grid = np.geomspace(full_grid[1],full_grid[-1],200)
     data = np.interp(temp_grid,nodes,spline)
@@ -49,20 +71,40 @@ def smooth_interpolation(full_grid,nodes,parameters,gamma):
 
 
 
-def variable_prior(uncertainty,k,xi_min,xi_max):
-    frequency_grid = np.linspace(0.001,1,len(uncertainty))
-    desired_frequency_nodes = np.geomspace(xi_min,xi_max,k+1)
-    
-    indexes = [list(frequency_grid).index(min(frequency_grid, key=lambda x:np.abs(x-node))) for node in desired_frequency_nodes]
-    frequency_nodes = np.array(frequency_grid[indexes])
-    
-    coef = np.array([uncertainty[indexes[i]] for i in range(k+1)])
-
-    return frequency_nodes, coef
-
-
-
 def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_max,gamma):
+    '''
+    Computes (1+dA)exp(idphi) from the frequency node and correction parameters.
+
+    Parameters
+    ==================
+    frequency_array: numpy.ndarray
+        frequency grid over which to generate the waveform correction
+    xi_0: float
+        starting frequency node parameter
+    delta_xi_tilde: float
+        frequency node spacing parameter
+    dAs: list or numpy.ndarray
+        list of dA (alpha_tilde) parameters
+    dphis: list or numpy.ndarray
+        list of dphi (varphi_tilde) parameters
+    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dA prior
+    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dphi prior
+    mass_1: float
+        mass of the primary body in the binary
+    mass_2: float
+        mass of the secondary body in the binary
+    xi_max: float
+        upper bound on the dimensionless frequency grid
+    gamma: float
+        smoothing parameter for the smooth interpolation function
+
+    Returns
+    ==================
+    waveform_correction: numpy.ndarray
+        (1+dA)exp(idphi) array to multiply to frequency domain gravitational-wave strain; same shape as frequency_array input
+    '''
     n = len(dAs)-1
     total_mass = mass_1+mass_2
     dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
@@ -113,6 +155,29 @@ def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,**kwargs):
 
 
 def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
+    '''
+    Computes the distributions in dimensionless frequency where waveforms cross detector noise.
+
+    Parameters
+    ==================
+    waveform_generator: bilby.gw.waveform_generator.WaveformGenerator
+        bilby waveform generator object
+    asd_data: numpy.ndarray
+        array of amplitude spectral density data; assumes standard LIGO formatting
+    prior: bilby.core.prior.PriorDict
+        bilby prior object to draw BBH parameters from
+    samples: int
+        number of waveforms to draw
+    desc: string
+        description of what this function is doing; this will be printed by the logger while this function runs
+
+    Returns
+    ==================
+    lower_xis: list
+        list of dimensionless frequency values where a frequency domain waveform enters the detectable region of a detector
+    upper_xis: list
+        list of dimensionless frequency values where a frequency domain waveform leaves the detectable region of a detector
+    '''
     lower_xis = []
     upper_xis = []
     log = logging.getLogger(__name__)
@@ -150,12 +215,60 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
 
 
 
-def gaussian(x, A, mu, sigma):
-    return A * np.exp(-0.5*((x - mu)/sigma)**2)
+def gaussian(x, N, mu, sigma):
+    '''
+    Gaussian function.
+
+    Parameters
+    ==================
+    x: numpy.ndarray
+        input array
+    N: float
+        scaling constant
+    mu: float
+        mean of the Gaussian
+    sigma: float
+        standard deviation of the Gaussian
+
+    Returns
+    ==================
+    output_array: numpy.ndarray
+        output Gaussian corresponding to the input array
+    '''
+    output_array = N*np.exp(-0.5*((x - mu)/sigma)**2)
+    
+    return output_array
 
 
 
 def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max):
+    '''
+    Computes the gaussian fits for the xi_0 and delta_xi_tilde priors. To be used in conjunction with GWCorrect.wfu.utils.A_ASD_solutions
+
+    Parameters
+    ==================
+    lower_xis: list
+        lower_xis from GWCorrect.wfu.utils.A_ASD_solutions
+    upper_xis: list
+        upper_xis from GWCorrect.wfu.utils.A_ASD_solutions
+    xi_max: float
+        upper bound on the dimensionless frequency band
+
+    Returns
+    ==================
+    mu1: float
+        mean of the lower_xis distribution
+    sigma1: float
+        standard deviation of the lower_xis distribution
+    mu2: float
+        mean of the upper_xis distribution
+    sigma2: float
+        standard deviation of the upper_xis distribution
+    mu: float
+        mean of the delta_xi_tilde distribution
+    sigma: float
+        standard deviation of the delta_xi_tilde distribution
+    '''
     lower=lower_xis.copy()
     upper=upper_xis.copy()
     while len(lower) != len(upper):
