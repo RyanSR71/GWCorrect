@@ -89,31 +89,7 @@ def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_d
 
 
 
-def maxL(result):
-    '''
-    Calculates the set of parameters in a posterior that together yield the highest likelihood
-
-    Parameters
-    ==================
-    result: bilby.core.result.Result
-        bilby result object from a parameter estimation run
-
-    Returns
-    ==================
-    maxL_dict: dictionary
-        dictionary of the maximum likelihood values of each of the injected parameters
-    '''
-    maxL_index = np.argmax(result.log_likelihood_evaluations)
-    
-    maxL_dict = dict()
-    for parameter in result.priors.keys():
-        maxL_dict[parameter] = result.posterior[parameter][maxL_index]
-        
-    return maxL_dict
-
-
-
-def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc):
+def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
     lower_xis = []
     upper_xis = []
     log = logging.getLogger(__name__)
@@ -123,13 +99,17 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc
     for trial in tqdm.tqdm(range(samples), desc = desc):
         roots = []
         injection = prior.sample()
-        geometrized_frequency_grid = np.geomspace(xi_min,xi_max,1000)
+        geometrized_frequency_grid = np.geomspace(0.001,1/np.pi,1000)
         amplitude = np.abs(waveform_generator.frequency_domain_strain(parameters=injection)['plus'])
         M = bilby.gw.conversion.generate_mass_parameters(injection)['total_mass']
         freqs = waveform_generator.frequency_array/float(203025.4467280836/M)
-
+        
+        zero_indices = np.where(amplitude==0)[0]
+        amplitude = np.delete(amplitude,zero_indices)
+        freqs = np.delete(freqs,zero_indices)
+        
         effective_amplitude = np.interp(geometrized_frequency_grid,freqs,2*amplitude*np.sqrt(freqs)*np.sqrt(float(203025.4467280836/M)))
-        ASD = np.interp(geometrized_frequency_grid,psd_data[:,0]/float(203025.4467280836/M),np.sqrt(psd_data[:,1]))
+        ASD = np.interp(geometrized_frequency_grid,asd_data[:,0]/float(203025.4467280836/M),asd_data[:,1])
         nodes = np.linspace(0,len(geometrized_frequency_grid)-1,100).astype(int)
         parameters = (effective_amplitude-ASD)[nodes]
         spline = scipy.interpolate.CubicSpline(geometrized_frequency_grid[nodes],parameters)
@@ -140,7 +120,6 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc
                     lower_xis.append(roots[0])
                     upper_xis.append(roots[-1])
                 else:
-                    lower_xis.append(xi_min)
                     upper_xis.append(roots[0])
         except:
             pass
@@ -148,108 +127,32 @@ def A_ASD_solutions(waveform_generator,psd_data,prior,samples,xi_min,xi_max,desc
 
 
 
-class TFDG(bilby.core.prior.Prior):
-    def __init__(self,mu_1,mu_2,sigma_1,sigma_2,minimum,maximum,name=None, latex_label=None):
-        super(TFDG, self).__init__(
-            name=name,latex_label=latex_label,minimum=minimum,maximum=maximum
-        )
-        self.mu_1 = float(mu_1)
-        self.mu_2 = float(mu_2)
-        self.sigma_1 = float(sigma_1)
-        self.sigma_2 = float(sigma_2)
-        
-        
-    def prob(self, val):
-        in_region_1 = (val >= self.minimum) & (val <= self.mu_1)
-        in_region_2 = (val > self.mu_1) & (val < self.mu_2)
-        in_region_3 = (val >= self.mu_2) & (val <= self.maximum)
-        N = (-np.sqrt(np.pi/2)*self.sigma_1*scipy.special.erf((self.minimum-self.mu_1)/(np.sqrt(2)*self.sigma_1))+np.sqrt(np.pi/2)*self.sigma_2*scipy.special.erf((self.maximum-self.mu_2)/(np.sqrt(2)*self.sigma_2))+self.mu_2-self.mu_1)**-1
-        draw = N*np.exp(-0.5*((val-self.mu_1)/self.sigma_1)**2)*in_region_1+N*in_region_2+N*np.exp(-0.5*((val-self.mu_2)/self.sigma_2)**2)*in_region_3
-        return draw
+def gaussian(x, A, mu, sigma):
+    return A * np.exp(-0.5*((x - mu)/sigma)**2)
+
+
+
+def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max):
+    lower=lower_xis.copy()
+    upper=upper_xis.copy()
+    while len(lower) != len(upper):
+        upper.pop(0)
+
+    delta_xi_tilde = (np.array(upper)-np.array(lower))/(xi_max-np.array(lower))
+
+    counts, edges = np.histogram(lower_xis, bins=100, density=True)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.01, 0.01])
+    _, mu1, sigma1 = popt
+
+    counts, edges = np.histogram(upper_xis, bins=100, density=True)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.1, 0.01])
+    _, mu2, sigma2 = popt
+
+    counts, edges = np.histogram(delta_xi_tilde, bins=100, density=True)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.3, 0.1])
+    _, mu, sigma = popt
     
-    
-    def rescale(self, val):
-        N = (-np.sqrt(np.pi/2)*self.sigma_1*scipy.special.erf((self.minimum-self.mu_1)/(np.sqrt(2)*self.sigma_1))+np.sqrt(np.pi/2)*self.sigma_2*scipy.special.erf((self.maximum-self.mu_2)/(np.sqrt(2)*self.sigma_2))+self.mu_2-self.mu_1)**-1
-        A_1 = np.sqrt(np.pi/2)*N*self.sigma_1*scipy.special.erf((self.mu_1-self.minimum)/(np.sqrt(2)*self.sigma_1))
-        A_2 = N*(self.mu_2-self.mu_1)
-        
-        if hasattr(val, "__len__"):
-            draw = []
-            for v in val:
-        
-                in_region_1 = (v >= 0) & (v <= A_1)
-                in_region_2 = (v > A_1) & (v <= A_1+A_2)
-                in_region_3 = (v >= A_1+A_2) & (v <= 1)
-
-                if in_region_1:
-                    draw.append(np.sqrt(2)*self.sigma_1*scipy.special.erfinv((np.sqrt(2*np.pi)*v-np.pi*np.sqrt(2/np.pi)*A_1)/(np.pi*N*self.sigma_1))+self.mu_1)
-                elif in_region_2:
-                    draw.append((N*self.mu_1+v-A_1)/N)
-                elif in_region_3:
-                    draw.append(self.mu_2-np.sqrt(2)*self.sigma_2*scipy.special.erfinv((np.sqrt(2*np.pi)*A_1+np.sqrt(2*np.pi)*A_2-np.sqrt(2*np.pi)*v)/(np.pi*N*self.sigma_2)))
-                else:
-                    raise Exception('Draw Failed!')
-            return np.array(draw)
-        
-        else:
-            in_region_1 = (val >= 0) & (val <= A_1)
-            in_region_2 = (val > A_1) & (val <= A_1+A_2)
-            in_region_3 = (val >= A_1+A_2) & (val <= 1)
-
-            if in_region_1:
-                draw = np.sqrt(2)*self.sigma_1*scipy.special.erfinv((np.sqrt(2*np.pi)*val-np.pi*np.sqrt(2/np.pi)*A_1)/(np.pi*N*self.sigma_1))+self.mu_1
-            elif in_region_2:
-                draw = (N*self.mu_1+val-A_1)/N
-            elif in_region_3:
-                draw = self.mu_2-np.sqrt(2)*self.sigma_2*scipy.special.erfinv((np.sqrt(2*np.pi)*A_1+np.sqrt(2*np.pi)*A_2-np.sqrt(2*np.pi)*val)/(np.pi*N*self.sigma_2))
-            else:
-                raise Exception('Draw Failed!')
-            return draw
-
-        
-        
-class EHG(bilby.core.prior.Prior):
-    def __init__(self,mu,sigma,minimum,maximum,name=None, latex_label=None):
-        super(EHG, self).__init__(
-            name=name,latex_label=latex_label,minimum=minimum,maximum=maximum
-        )
-        self.mu = float(mu)
-        self.sigma = float(sigma)        
-        
-    def prob(self, val):
-        in_region_1 = (val >= self.minimum) & (val <= self.mu)
-        in_region_2 = (val > self.mu) & (val <= self.maximum)
-        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.maximum-self.mu)/(np.sqrt(2)*self.sigma))+self.mu-self.minimum)**-1
-        draw = N*in_region_1+N*np.exp(-0.5*((val-self.mu)/self.sigma)**2)*in_region_2
-        return draw
-            
-    
-    def rescale(self, val):
-        N = (np.sqrt(np.pi/2)*self.sigma*scipy.special.erf((self.maximum-self.mu)/(np.sqrt(2)*self.sigma))+self.mu-self.minimum)**-1
-        A = N*(self.mu-self.minimum)
-        
-        if hasattr(val, "__len__"):
-            draw = []
-            for v in val:
-                in_region_1 = (v >= 0) & (v < A)
-                in_region_2 = (v >= A) & (v <= 1)
-
-                if in_region_1:
-                    draw.append((N*self.minimum+v)/N)
-                elif in_region_2:
-                    draw.append(self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.sqrt(2*np.pi)*A-np.sqrt(2*np.pi)*v)/(np.pi*N*self.sigma)))
-                else:
-                    raise Exception('Draw Failed!')
-            return np.array(draw)
-        
-        else:
-            in_region_1 = (val >= 0) & (val < A)
-            in_region_2 = (val >= A) & (val <= 1)
-
-            if in_region_1:
-                draw = ((N*self.minimum+val)/N)
-            elif in_region_2:
-                draw = (self.mu-np.sqrt(2)*self.sigma*scipy.special.erfinv((np.sqrt(2*np.pi)*A-np.sqrt(2*np.pi)*val)/(np.pi*N*self.sigma)))
-            else:
-                raise Exception('Draw Failed!')
-            return draw
+    return mu1, np.abs(sigma1), mu2, np.abs(sigma2), mu, np.abs(sigma)
