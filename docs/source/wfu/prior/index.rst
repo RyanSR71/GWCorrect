@@ -7,4 +7,4 @@ Prior
 
   TotalMassConstraint
   conversion
-  xi_priors
+  frequency_node_prior_parameters
