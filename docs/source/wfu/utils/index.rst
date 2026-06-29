@@ -6,3 +6,4 @@ Utility Functions
   :caption: GWCorrect.wfu.utils
 
   ProgressBar
+  smooth_interpolation
