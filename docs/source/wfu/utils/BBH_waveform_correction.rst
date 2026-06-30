@@ -1,5 +1,5 @@
-GC_waveform_correction
-======================
+BBH_waveform_correction
+=======================
 
 .. code-block:: python
 
