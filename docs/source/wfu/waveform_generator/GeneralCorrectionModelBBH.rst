@@ -1,15 +1,15 @@
-GeneralCorrectionModelBBH
-=========================
+WaveformCorrectionModelBBH
+==========================
 
 .. code-block:: python
 
-   GWCorrect.wfu.waveform_generator.GeneralCorrectionModelBBH(parameters,**kwargs)
+   GWCorrect.wfu.waveform_generator.WaveformCorrectionModelBBH(parameters,**kwargs)
 
 Modified lal binary black hole frequency domain source model to include waveform error corrections in the strain calculation.
 
 .. math::
 
-   \mu_\mathrm{GC}(f;\vartheta,\mathrm{A},\Phi)=\mu(f;\vartheta)(1+\Delta\mathcal{A}_\mathrm{SI}(f;\{\mathrm{f}_k,\tilde\alpha_k\sigma_{\alpha,k}\}))\exp(i\Delta\phi_\mathrm{SI}(f;\{\mathrm{f}_k,\tilde\varphi_k\sigma_{\varphi,k}\}))
+   \mu_\mathcal{C}(f;\vartheta,\mathrm{A},\Phi)=\mu(f;\vartheta)(1+\Delta\mathcal{A}_\mathrm{SI}(f;\mathrm{A}))\exp(i\Delta\phi_\mathrm{SI}(f;\Phi))
 
 Make sure to include "xi_0", "delta_xi_tilde", and all necessary "dA" and "dphi" parameters in the prior.
 
