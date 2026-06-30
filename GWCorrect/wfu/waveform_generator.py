@@ -223,21 +223,41 @@ def binary_black_hole_correction_conversion(parameters):
     dA_keys = [key for key in parameters if 'dA_' in key]
     dphi_keys = [key for key in parameters if 'dphi_' in key]
     
-    if len(dA_keys) != 0 and len(dphi_keys) != 0:
-            if len(dA_keys) != len(dphi_keys):
-                raise Exception(f'Amplitude and Phase corrections do not have the same number of parameters! dA: {len(dA_keys)} dphi: {len(dphi_keys)}')
-    elif len(dA_keys) == 0 and len(dphi_keys) == 0:
-        raise Exception('No waveform correction detected!')
-    
-    if len(dA_keys) != 0:
+    if len(dA_keys) == 0:
+        correct_amplitude = False
+    else:
         dAs = [parameters[key] for key in dA_keys]
-        dphis = list(np.zeros(len(dA_keys)))
-    if len(dphi_keys) != 0:
-        dAs = list(np.zeros(len(dphi_keys)))
-        dphis = [parameters[key] for key in dphi_keys]
+        if not any(dAs):
+            correct_amplitude = False
+        else:
+            correct_amplitude = True
     
-    converted_parameters['dAs'] = dAs
-    converted_parameters['dphis'] = dphis
+    if len(dphi_keys) == 0:
+        correct_phase = False
+    else:
+        dphis = [parameters[key] for key in dphi_keys]
+        if not any(dphis):
+            correct_phase = False
+        else:
+            correct_phase = True
+            
+    if correct_amplitude and correct_phase:
+        if len(dAs) != len(dphis):
+            raise Exception(f'Amplitude and Phase corrections do not have the same number of parameters! dA: {len(dAs)} dphi: {len(dphis)}')
+        else:
+            converted_parameters['dAs'] = dAs
+            converted_parameters['dphis'] = dphis
+    
+    if correct_amplitude and not correct_phase:
+        converted_parameters['dAs'] = dAs
+        converted_parameters['dphis'] = list(np.zeros(len(dAs)))
+        
+    if correct_phase and not correct_amplitude:
+        converted_parameters['dphis'] = dphis
+        converted_parameters['dAs'] = list(np.zeros(len(dphis)))
+        
+    if not correct_phase or correct_amplitude:
+        raise Exception('No waveform corrections given!')
     
     added_keys = [key for key in converted_parameters.keys()
                   if key not in original_keys]
