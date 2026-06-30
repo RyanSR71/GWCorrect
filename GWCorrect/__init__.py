@@ -1,4 +1,4 @@
 "GWCorrect package"
-__version__ = "0.22.5"
+__version__ = "0.23.0"
 
 from . import wfu, ppE
