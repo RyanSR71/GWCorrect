@@ -257,8 +257,9 @@ def binary_black_hole_correction_conversion(parameters):
         converted_parameters['dAs'] = list(np.zeros(len(dphis)))
         
     if not (correct_phase or correct_amplitude):
-        raise Exception('No waveform corrections given!')
-    
+        converted_parameters['dAs'] = [0,0]
+        converted_parameters['dphis'] = [0,0]
+        
     added_keys = [key for key in converted_parameters.keys()
                   if key not in original_keys]
 
