@@ -71,7 +71,7 @@ def smooth_interpolation(full_grid,nodes,parameters,gamma):
 
 
 
-def GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_max,gamma):
+def BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_max,gamma):
     '''
     Computes (1+dA)exp(idphi) from the frequency node and correction parameters.
 
