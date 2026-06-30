@@ -5,5 +5,5 @@ Waveform Generator
   :maxdepth: 3
   :caption: GWCorrect.wfu.waveform_generator
 
-  GeneralCorrectionModelBBH
+  WaveformCorrectionModelBBH
   binary_black_hole_correction_conversion
