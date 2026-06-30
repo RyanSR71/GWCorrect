@@ -9,11 +9,11 @@ from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
 from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
-from .utils import smooth_interpolation,GC_waveform_correction
+from .utils import smooth_interpolation,BBH_waveform_correction
 
 
 
-def GeneralCorrectionModelBBH(
+def WaveformCorrectionModelBBH(
         frequency_array, mass_1, mass_2, luminosity_distance, a_1, tilt_1,
         phi_12, a_2, tilt_2, phi_jl, theta_jn, phase,
         xi_0, delta_xi_tilde, dAs, dphis, **kwargs):
@@ -110,7 +110,7 @@ def GeneralCorrectionModelBBH(
         a_1=a_1, a_2=a_2, tilt_1=tilt_1, tilt_2=tilt_2, phi_12=phi_12,
         phi_jl=phi_jl, **waveform_arguments)
 
-    waveform_correction = GC_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,
+    waveform_correction = BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,
                                                  sigma_dA_spline,sigma_dphi_spline,
                                                  mass_1,mass_2,xi_high,gamma)
     
