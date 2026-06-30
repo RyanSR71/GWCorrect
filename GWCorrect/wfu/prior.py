@@ -5,7 +5,7 @@ import time
 import sys
 import scipy
 import lal
-from .utils import A_ASD_solutions, gaussian_parameters_from_A_ASD_solutions, delta_t_01
+from .utils import A_ASD_solutions, gaussian_parameters_from_A_ASD_solutions, delta_t_01, epsilon_alpha
 from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
@@ -85,6 +85,33 @@ def conversion(input_parameters,**kwargs):
     parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
     if n is not None:
         parameters['delta_t_01'] = delta_t_01(parameters['xi_0'],parameters['delta_xi_tilde'],parameters['total_mass'],n,xi_max)
+    return parameters
+
+
+
+def amplitude_conversion(input_parameters,n,xi_max,sigma_dA_spline):
+    '''
+    Conversion function for the amplitude error constraint parameter.
+
+    Parameters
+    ==================
+    input_parameters: dict
+        dictionary of binary black hole source parameters and waveform correction parameters
+    n: int
+        number of frequency nodes excluding 0; if given, delta_t_01 will be calculated
+    xi_max: float
+        upper bound on the dimensionless frequency band
+    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dA prior
+
+    Returns
+    ==================
+    parameters: dict
+        input parameters plus epsilon_alpha
+    '''
+    parameters=input_parameters.copy()
+    dAs = [parameters[f'dA_{k}'] for k in range(0,n+1)]
+    parameters['epsilon_alpha'] = epsilon_alpha(dAs,parameters['xi_0'],parameters['delta_xi_tilde'],xi_max,sigma_dA_spline)
     return parameters
 
 
