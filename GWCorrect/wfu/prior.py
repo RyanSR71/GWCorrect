@@ -5,7 +5,7 @@ import time
 import sys
 import scipy
 import lal
-from .utils import A_ASD_solutions, gaussain_parameters_from_A_ASD_solutions, delta_t_01
+from .utils import A_ASD_solutions, gaussian_parameters_from_A_ASD_solutions, delta_t_01
 from bilby.core import utils
 from bilby.core.series import CoupledTimeAndFrequencySeries
 from bilby.core.utils import PropertyAccessor
