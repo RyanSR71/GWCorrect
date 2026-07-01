@@ -53,7 +53,7 @@ def TotalMassConstraint(*,name,minimum_frequency,maximum_frequency,**kwargs):
 
 def conversion(input_parameters,**kwargs):
     '''
-    Conversion function needed to use the total_mass constraint prior and the delta_t_01 constraint prior.
+    Conversion function needed to use the total_mass, delta_t_01, and epsilon_alpha constraint priors.
 
     Parameters
     ==================
