@@ -68,9 +68,10 @@ def conversion(input_parameters,**kwargs):
     total_mass: float, optional
         if mass parameters are not being sampled in the prior, set the fixed total mass value here
         default: None
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
+    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline, optional
         scipy cubic spline object encoding the standard deviation of the dA prior; if given, epsilon_alpha will be calculated
-
+        default: None
+        
     Returns
     ==================
     parameters: dict
