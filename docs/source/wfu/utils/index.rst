@@ -6,6 +6,7 @@ Utility Functions
   :caption: GWCorrect.wfu.utils
 
   ProgressBar
+  rolling_average
   smooth_interpolation
   BBH_waveform_correction
   delta_t_01
