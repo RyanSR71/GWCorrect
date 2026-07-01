@@ -13,7 +13,7 @@ Conversion function needed to use the total_mass, delta_t_01, and epsilon_alpha 
 
 .. math::
 
-  \epsilon_\alpha = n-\sum_{k=1}^n\theta(\alpha_k+1)
+  \epsilon_\alpha = n-\sum_{k=1}^n\theta(\tilde\alpha_k\sigma_\mathcal{A}(\xi_k)+1)
 
 Parameters:
 ------------
