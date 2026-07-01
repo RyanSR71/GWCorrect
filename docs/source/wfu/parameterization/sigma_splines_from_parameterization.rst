@@ -3,8 +3,8 @@ sigma_splines_from_parameterization
 
 .. code-block:: python
 
-   GWCorrect.wfu.parameterization.sigma_splines_from_parameterization(parameterization,dimensionless=True,
-   xi_min=0.001,xi_max=0.318,resolution=1000)
+   GWCorrect.wfu.parameterization.sigma_splines_from_parameterization(parameterization,
+   dimensionless=True,xi_min=0.001,xi_max=0.318,resolution=1000)
 
 Generates the standard deviations of the waveform correction priors and stores them in spline objects from a parameterization file.
 
@@ -20,18 +20,14 @@ Parameters:
 -----------
 parameterization: numpy.ndarray
     parameterization file from GWCorrect.wfu.parameterization.parameterization
-dimensionless: bool, optional
+dimensionless: bool, optional, (true)
     whether or not the output is returned in dimensionless frequency units
-    Default: True
-xi_min: float, optional
+xi_min: float, optional, (0.001)
     if dimensionless is True, this is the lower bound on the dimensionless frequency grid
-    default: 0.001
-xi_max: float, optional
+xi_max: float, optional, (1/pi, 0.318...)
     if dimensionless is True, this is the upper bound on the dimensionless frequency grid
-    default: 1/pi, 0.318...
-resolution: int, optional
+resolution: int, optional, (1000)
     if dimensionless is True, this is the number of points in the dimensionless frequency grid
-    default: 1000
 
 Returns:
 --------
