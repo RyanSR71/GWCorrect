@@ -3,7 +3,7 @@ import bilby
 import scipy
 import logging
 import tqdm
-from .utils import ProgressBar
+from .utils import ProgressBar,convert_to_dimensionless_frequency
 
 
 
@@ -221,13 +221,13 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
         one row of a parameterization matrix
     dimensionless: bool, optional
         whether or not the output is returned in dimensionless frequency units
-        Default: False
+        Default: True
     xi_low: float, optional
         if dimensionless is True, this is the lower bound on the dimensionless frequency grid
         default: 0.001
     xi_high: float, optional
         if dimensionless is True, this is the upper bound on the dimensionless frequency grid
-        default: 1
+        default: 1/pi, 0.318...
     resolution: int, optional
         if dimensionless is True, this is the number of points in the dimensionless frequency grid
         default: 1000
@@ -235,15 +235,15 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
     Returns:
     ==================
     frequency_grid: numpy.ndarray
-        array of frequency points
+        array of frequency points; if dimensionless=False, this will be the frequency grid stored in the parameterization file
     amplitude_difference: numpy.ndarray
         array of amplitude differences
     phase_difference: numpy.ndarray
         array of phase differences
     '''
-    dimensionless = kwargs.get('dimensionless',False)
-    xi_low = kwargs.get('xi_low',0.001)
-    xi_high = kwargs.get('xi_high',1)
+    dimensionless = kwargs.get('dimensionless',True)
+    xi_low = kwargs.get('xi_min',0.001)
+    xi_high = kwargs.get('xi_max',1/np.pi)
     resolution = kwargs.get('resolution',1000)
     
     frequency_grid = parameterization_draw[0].copy()
@@ -252,10 +252,10 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
     dphi_params = parameterization_draw[3].copy()
     
     if dimensionless is True:
-        M = bilby.gw.conversion.generate_mass_parameters(parameterization_draw[4])['total_mass']
+        total_mass = bilby.gw.conversion.generate_mass_parameters(parameterization_draw[4])['total_mass']
         total_frequency_grid = np.geomspace(xi_low,xi_high,resolution)
-        frequency_grid *= M/203025.4467280836
-        nodes *= M/203025.4467280836
+        frequency_grid = convert_to_dimensionless_frequency(frequency_grid,total_mass)
+        nodes = convert_to_dimensionless_frequency(nodes,total_mass)
     else:
         total_frequency_grid = frequency_grid.copy()
         
@@ -279,13 +279,13 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
         parameterization matrix
     dimensionless: bool, optional
         whether or not the output is returned in dimensionless frequency units
-        Default: False
+        Default: True
     xi_low: float, optional
         if dimensionless is True, this is the lower bound on the dimensionless frequency grid
         default: 0.001
     xi_high: float, optional
         if dimensionless is True, this is the upper bound on the dimensionless frequency grid
-        default: 1
+        default: 1/pi, 0.318...
     resolution: int, optional
         if dimensionless is True, this is the number of points in the dimensionless frequency grid
         default: 1000
@@ -300,10 +300,12 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
         array of the mean phase differences as a function of frequency
     phase_uncertainty: numpy.ndarray
         array of the stand deviation of the phase differences across frequency
+    frequency_grid: numpy.ndarray
+        array of frequencies (dimensionless or SI) that corresponds to the other output quantities
     '''
-    dimensionless = kwargs.get('dimensionless',False)
+    dimensionless = kwargs.get('dimensionless',True)
     xi_low = kwargs.get('xi_low',0.001)
-    xi_high = kwargs.get('xi_high',1)
+    xi_high = kwargs.get('xi_high',1/np.pi)
     resolution = kwargs.get('resolution',1000)
     
     total_dAs = []
@@ -324,4 +326,4 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
     mean_phase_difference = np.mean(total_dphis,axis=0)
     phase_uncertainty = np.std(total_dphis,axis=0)
     
-    return mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty
+    return mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty,frequency_grid
