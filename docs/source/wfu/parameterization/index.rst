@@ -9,3 +9,4 @@ Parameterization
   parameterization
   recovery_from_parameterization
   uncertainties_from_parameterization
+  sigma_splines_from_parameterization
