@@ -12,6 +12,11 @@ def convert_to_dimensionless_frequency(frequencies,total_mass):
         SI frequency values
     total_mass: float
         total binary mass to weight the frequencies
+
+    Returns
+    ==================
+    dimensionless_frequency: float or numpy.ndarray
+        dimensionless frequencies of the same shape as the input frequencies
     '''
     return 0.000004925490947641267*total_mass*frequencies
 
