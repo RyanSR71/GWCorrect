@@ -16,9 +16,8 @@ dhs: list or numpy.ndarray
     rescaled waveform correction parmaters, either dA or dphi
 sigma_dh_spline: scipy.interpolate._cubic.CubicSpline
     scipy cubic spline object encoding the standard deviation of the dh prior, either dA or dphi
-gamma: float, optional
+gamma: float, optional, (0.025)
     smoothing parameters
-    default: 0.025
 
 Returns:
 --------
