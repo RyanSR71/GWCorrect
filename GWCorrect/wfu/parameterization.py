@@ -222,10 +222,10 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
     dimensionless: bool, optional
         whether or not the output is returned in dimensionless frequency units
         Default: True
-    xi_low: float, optional
+    xi_min: float, optional
         if dimensionless is True, this is the lower bound on the dimensionless frequency grid
         default: 0.001
-    xi_high: float, optional
+    xi_max: float, optional
         if dimensionless is True, this is the upper bound on the dimensionless frequency grid
         default: 1/pi, 0.318...
     resolution: int, optional
@@ -242,8 +242,8 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
         array of phase differences
     '''
     dimensionless = kwargs.get('dimensionless',True)
-    xi_low = kwargs.get('xi_min',0.001)
-    xi_high = kwargs.get('xi_max',1/np.pi)
+    xi_min = kwargs.get('xi_min',0.001)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     resolution = kwargs.get('resolution',1000)
     
     frequency_grid = parameterization_draw[0].copy()
@@ -253,7 +253,7 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
     
     if dimensionless is True:
         total_mass = bilby.gw.conversion.generate_mass_parameters(parameterization_draw[4])['total_mass']
-        total_frequency_grid = np.geomspace(xi_low,xi_high,resolution)
+        total_frequency_grid = np.geomspace(xi_min,xi_max,resolution)
         frequency_grid = convert_to_dimensionless_frequency(frequency_grid,total_mass)
         nodes = convert_to_dimensionless_frequency(nodes,total_mass)
     else:
@@ -280,10 +280,10 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
     dimensionless: bool, optional
         whether or not the output is returned in dimensionless frequency units
         Default: True
-    xi_low: float, optional
+    xi_min: float, optional
         if dimensionless is True, this is the lower bound on the dimensionless frequency grid
         default: 0.001
-    xi_high: float, optional
+    xi_max: float, optional
         if dimensionless is True, this is the upper bound on the dimensionless frequency grid
         default: 1/pi, 0.318...
     resolution: int, optional
@@ -304,8 +304,8 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
         array of frequencies (dimensionless or SI) that corresponds to the other output quantities
     '''
     dimensionless = kwargs.get('dimensionless',True)
-    xi_low = kwargs.get('xi_low',0.001)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    xi_min = kwargs.get('xi_min',0.001)
+    xi_max = kwargs.get('xi_max',1/np.pi)
     resolution = kwargs.get('resolution',1000)
     
     total_dAs = []
@@ -314,7 +314,7 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
     for i in range(len(parameterization)):
         frequency_grid,amplitude_difference,phase_difference = recovery_from_parameterization(parameterization[i],
                                                                                               dimensionless=dimensionless,
-                                                                                             xi_low=xi_low,xi_high=xi_high,
+                                                                                             xi_min=xi_min,xi_max=xi_max,
                                                                                              resolution=resolution)
         
         total_dAs.append(amplitude_difference)
@@ -327,3 +327,48 @@ def uncertainties_from_parameterization(parameterization, **kwargs):
     phase_uncertainty = np.std(total_dphis,axis=0)
     
     return mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty,frequency_grid
+
+
+
+def sigma_splines_from_parameterization(parameterization,**kwargs):
+    '''
+    Generates the standard deviations of the waveform correction priors from a parameterization file.
+
+    Parameters
+    ==================
+    parameterization: numpy.ndarray
+        parameterization file from GWCorrect.wfu.parameterization.parameterization
+    dimensionless: bool, optional
+        whether or not the output is returned in dimensionless frequency units
+        Default: True
+    xi_min: float, optional
+        if dimensionless is True, this is the lower bound on the dimensionless frequency grid
+        default: 0.001
+    xi_max: float, optional
+        if dimensionless is True, this is the upper bound on the dimensionless frequency grid
+        default: 1/pi, 0.318...
+    resolution: int, optional
+        if dimensionless is True, this is the number of points in the dimensionless frequency grid
+        default: 1000
+
+    Returns
+    ==================
+    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dA prior
+    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dphi prior
+    '''
+    dimensionless = kwargs.get('dimensionless',True)
+    xi_min = kwargs.get('xi_min',0.001)
+    xi_max = kwargs.get('xi_max',1/np.pi)
+    resolution = kwargs.get('resolution',1000)
+    
+    mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty,nodes = uncertainties_from_parameterization(parameterization,dimensionless=dimensionless,xi_min=xi_min,xi_max=xi_max,resolution=resolution)
+    
+    sigma_dA = np.sqrt(mean_amplitude_difference**2 + amplitude_uncertainty**2)
+    sigma_dphi = np.sqrt(mean_phase_difference**2 + phase_uncertainty**2)
+    
+    sigma_dA_spline = scipy.interpolate.CubicSpline(nodes,sigma_dA)
+    sigma_dphi_spline = scipy.interpolate.CubicSpline(nodes,sigma_dphi)
+    
+    return sigma_dA_spline, sigma_dphi_spline
