@@ -1,4 +1,4 @@
-convert_to_dimensionless_frequency
+convert_to_SI_frequency
 ==================================
 
 .. code-block:: python
