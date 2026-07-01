@@ -131,67 +131,6 @@ def BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_
 
 
 
-def delta_t_01(xi_0,delta_xi_tilde,total_mass,n,xi_max):
-    '''
-    Computes delta_t_01.
-
-    Parameters
-    ==================
-    xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency node spacing parameter
-    total_mass: float
-        total system mass (m_1+m_2)
-    n: int
-        number of frequency nodes excluding 0
-    xi_max: float
-        upper bound on the dimensionless frequency band
-
-    Returns
-    ==================
-    delta_t_01: float
-        delta_t_01 value
-    '''
-    delta_t_01 = 0.000004925490947641267*n*total_mass/((xi_max-xi_0)*delta_xi_tilde)
-
-    return delta_t_01
-
-
-
-def epsilon_alpha(dAs,xi_0,delta_xi_tilde,xi_max,sigma_dA_spline):
-    '''
-    Computes epsilon_alpha up to 1.
-
-    Parameters
-    ==================
-    dAs: list or numpy.ndarray
-        list of dA parameters including dA_0
-    xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency node spacing parameter
-    xi_max: float
-        upper bound on the dimensionless frequency band
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dA prior
-
-    Returns
-    ==================
-    epsilon_alpha: float
-        amplitude error parameter
-    '''
-    n = len(dAs)-1
-    dimensionless_frequency_nodes = [xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**k/n for k in range(0,n+1)]
-    true_dAs = [dAs[k]*sigma_dA_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)] 
-    counter = n
-    if any(x < 0 for x in list(np.array(true_dAs)+1)):
-        counter -= 1
-    epsilon_alpha = n-counter
-    
-    return epsilon_alpha
-
-
 
 def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
     '''
