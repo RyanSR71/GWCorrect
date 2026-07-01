@@ -11,6 +11,10 @@ Conversion function needed to use the total_mass, delta_t_01, and epsilon_alpha 
 
   \Delta t_{01}\equiv\frac{nGM}{c^3(\xi_\mathrm{max}-\xi_0)\delta\tilde\xi}
 
+.. math::
+
+  \epsilon_\alpha = n-\sum_{k=1}^n\theta(\alpha_k+1)
+
 Parameters:
 ------------
 input_parameters: dict
