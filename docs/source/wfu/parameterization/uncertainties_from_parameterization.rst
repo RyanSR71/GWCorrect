@@ -4,7 +4,7 @@ uncertainties_from_parameterization
 .. code-block:: python
 
    GWCorrect.wfu.parameterization.uncertainties_from_parameterization(parameterization,
-   dimensionless=False,xi_min=0.001,xi_max=1,resolution=1000)
+   dimensionless=True,xi_min=0.001,xi_max=0.318,resolution=1000)
 
 Takes all of the sets in a parameterized waveform difference matrix and takes the mean and standard deviation of amplitude and phase difference.
 
@@ -12,15 +12,15 @@ Parameters:
 -----------
 parameterization: numpy.ndarry
    parameterization matrix
-dimensionless: bool, optional, (False)
+dimensionless: bool, optional, (True)
    whether or not the output is returned in dimensionless frequency units
 xi_min: float, optional, (0.001)
    if dimensionless is True, this is the lower bound on the dimensionless frequency grid
-xi_max: float, optional, (1)
+xi_max: float, optional, (1/pi, 0.318...)
    if dimensionless is True, this is the upper bound on the dimensionless frequency grid
 resolution: int, optional, (1000)
    if dimensionless is True, this is the number of points in the dimensionless frequency grid
-      
+
 Returns:
 --------
 mean_amplitude_difference: numpy.ndarray
@@ -31,3 +31,5 @@ mean_phase_difference: numpy.ndarry
    array of the mean phase differences as a function of frequency
 phase_uncertainty: numpy.ndarray
    array of the stand deviation of the phase differences across frequency
+frequency_grid: numpy.ndarray
+   array of frequencies (dimensionless or SI) that corresponds to the other output quantities
