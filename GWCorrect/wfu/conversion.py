@@ -52,8 +52,13 @@ def dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde(xi_0,delta_xi_tilde,n
         number of frequency nodes excluding 0
     xi_max: float
         upper bound on the dimensionless frequency band
+
+    Returns
+    ==================
+    dimensionless_frequency_nodes: numpy.ndarray
+        array of dimensionless frequency nodes from xi_0 to xi_n
     '''
-    dimensionless_frequency_nodes = [xi_0*(1+((xi_max-xi_0)/xi_0)*delta_xi_tilde)**(k/n) for k in range(0,n+1)]
+    dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/xi_0)*delta_xi_tilde)**(k/n) for k in range(0,n+1)])
     return dimensionless_frequency_nodes
 
 def delta_t_01_from_frequency_node_parameters(xi_0,delta_xi_tilde,total_mass,n,xi_max):
