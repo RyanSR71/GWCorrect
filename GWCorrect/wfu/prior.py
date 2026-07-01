@@ -1,15 +1,8 @@
 import numpy as np
 import bilby
-import random
-import time
-import sys
 import scipy
-import lal
-from .utils import A_ASD_solutions, gaussian_parameters_from_A_ASD_solutions, delta_t_01, epsilon_alpha
-from bilby.core import utils
-from bilby.core.series import CoupledTimeAndFrequencySeries
-from bilby.core.utils import PropertyAccessor
-from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
+from .utils import A_ASD_solutions, gaussian_parameters_from_A_ASD_solutions
+from .conversion import delta_t_01_from_frequency_node_parameters, epsilon_alpha_conversion
 
 
 
@@ -67,51 +60,40 @@ def conversion(input_parameters,**kwargs):
     input_parameters: dict
         dictionary of binary black hole source parameters and waveform correction parameters
     n: int, optional
-        number of frequency nodes excluding 0; if given, delta_t_01 will be calculated
+        number of frequency nodes excluding 0; if given, delta_t_01 and epsilon_alpha will be calculated
         default: None
     xi_max: float, optional
         upper bound on the dimensionless frequency band
         default: 1/np.pi
+    total_mass: float, optional
+        if mass parameters are not being sampled in the prior, set the fixed total mass value here
+        default: None
+    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dA prior; if given, epsilon_alpha will be calculated
 
     Returns
     ==================
     parameters: dict
-        input parameters plus total mass and delta_t_01 (if n is not None)
+        input parameters plus total mass, delta_t_01, and epsilon_alpha (assuming all necessary parameters are present)
     '''
     n = kwargs.get('n',None)
     xi_max = kwargs.get('xi_max',1/np.pi)
+    total_mass = kwargs.get('total_mass',None)
+    sigma_dA_spline = kwargs.get('sigma_dA_spline',None)
     
     parameters = input_parameters.copy()
-    parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    keys = list(parameters.keys())
+    if total_mass is None:
+        parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    else:
+        parameters['total_mass'] = total_mass
     if n is not None:
-        parameters['delta_t_01'] = delta_t_01(parameters['xi_0'],parameters['delta_xi_tilde'],parameters['total_mass'],n,xi_max)
-    return parameters
-
-
-
-def amplitude_conversion(input_parameters,n,xi_max,sigma_dA_spline):
-    '''
-    Conversion function for the amplitude error constraint parameter.
-
-    Parameters
-    ==================
-    input_parameters: dict
-        dictionary of binary black hole source parameters and waveform correction parameters
-    n: int
-        number of frequency nodes excluding 0; if given, delta_t_01 will be calculated
-    xi_max: float
-        upper bound on the dimensionless frequency band
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dA prior
-
-    Returns
-    ==================
-    parameters: dict
-        input parameters plus epsilon_alpha
-    '''
-    parameters=input_parameters.copy()
-    dAs = [parameters[f'dA_{k}'] for k in range(0,n+1)]
-    parameters['epsilon_alpha'] = epsilon_alpha(dAs,parameters['xi_0'],parameters['delta_xi_tilde'],xi_max,sigma_dA_spline)
+        if ('xi_0' and 'delta_xi_tilde') in keys:
+            parameters['delta_t_01'] = delta_t_01_from_frequency_node_parameters(parameters['xi_0'],parameters['delta_xi_tilde'],parameters['total_mass'],n,xi_max)
+            if sigma_dA_spline is not None:
+                if 'dA_0' in keys:
+                    dAs = [parameters[f'dA_{k}'] for k in range(0,n+1)]
+                    parameters['epsilon_alpha'] = epsilon_alpha_conversion(dAs,parameters['xi_0'],parameters['delta_xi_tilde'],xi_max,sigma_dA_spline)
     return parameters
 
 
