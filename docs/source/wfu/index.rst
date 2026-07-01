@@ -7,5 +7,6 @@ Waveform Uncertainty Correction
 
    parameterization/index
    prior/index
+   conversion/index
    waveform_generator/index
    utils/index
