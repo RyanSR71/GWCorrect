@@ -1,16 +1,9 @@
 import numpy as np
 import bilby
-import random
-import time
-import sys
 import scipy
-import lal
 import tqdm
 import logging
-from bilby.core import utils
-from bilby.core.series import CoupledTimeAndFrequencySeries
-from bilby.core.utils import PropertyAccessor
-from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
+from .conversion import dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde,convert_to_dimensionless_frequency
 
 
 
@@ -28,6 +21,29 @@ class ProgressBar(logging.Handler):
             self.flush()
         except Exception:
             self.handleError(record)
+
+
+
+def rolling_average(data,gamma):
+    '''
+    Rolling average function.
+
+    Parameters
+    ==================
+    data: numpy.ndarray
+        input array to be averaged
+    gamma: float
+        smoothing parameter
+    '''
+    new_data = data.copy()
+    r = int(gamma*len(data))
+    if r != 0:
+        lower_index = int(gamma*len(data))
+        upper_index = int((1-gamma)*len(data))
+        for i in range(lower_index,upper_index):
+            new_data[i] = (1/(2*r))*np.sum(data[i-r:i+r])
+
+    return new_data
 
 
 
@@ -54,20 +70,126 @@ def smooth_interpolation(full_grid,nodes,parameters,gamma):
     spline = scipy.interpolate.interp1d(nodes,parameters)(nodes)
     temp_grid = np.geomspace(full_grid[1],full_grid[-1],200)
     data = np.interp(temp_grid,nodes,spline)
-    new_data = data.copy()
-    
-    r = int(gamma*len(data))
-    if r != 0:
-        lower_index = int(gamma*len(data))
-        upper_index = int((1-gamma)*len(data))
-        for i in range(lower_index,upper_index):
-            new_data[i] = (1/(2*r))*np.sum(data[i-r:i+r])
+
+    new_data = rolling_average(data,gamma)
     
     output = np.interp(full_grid,temp_grid,new_data)
     if np.abs(output[0]) > 0:
         output -= output[0]
 
     return output
+
+
+
+def dh_SI(dimensionless_frequency_grid,dimensionless_frequency_nodes,dhs,sigma_dh_spline,**kwargs):
+    '''
+    Smooth interpolation function for the waveform correction parameters.
+
+    Parameters
+    ==================
+    dimensionless_frequency_grid: numpy.ndarray
+        array of mass-weighted dimensionless frequencies
+    dimensionless_frequency_nodes: list or numpy.ndarray
+        list of dimensionless frequency nodes
+    dhs: list or numpy.ndarray
+        rescaled waveform correction parmaters, either dA or dphi
+    sigma_dh_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dh prior, either dA or dphi
+    gamma: float, optional
+        smoothing parameters
+        default: 0.025
+
+    Returns
+    ==================
+    dh_smooth_interpolation: numpy.ndarray
+        dA or dphi smooth interpolation array corresponding to the input dimensionless frequency grid
+    '''
+    gamma = kwargs.get('gamma',0.025)
+    n = len(dhs)-1
+    true_dhs = [dhs[k]*sigma_dh_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)]
+    dh_SI = smooth_interpolation(dimensionless_frequency_grid,dimensionless_frequency_nodes,true_dhs,gamma)
+    return dh_SI
+
+
+
+def dh_1D(dimensionless_frequency_grid,dimensionless_frequency_nodes,dhs,sigma_dh_spline):
+    '''
+    1D interpolation function for the waveform correction parameters.
+
+    Parameters
+    ==================
+    dimensionless_frequency_grid: numpy.ndarray
+        array of mass-weighted dimensionless frequencies
+    dimensionless_frequency_nodes: list or numpy.ndarray
+        list of dimensionless frequency nodes
+    dhs: list or numpy.ndarray
+        rescaled waveform correction parmaters, either dA or dphi
+    sigma_dh_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dh prior, either dA or dphi
+
+    Returns
+    ==================
+    dh_1D_interpolation: numpy.ndarray
+        dA or dphi 1D interpolation array corresponding to the input dimensionless frequency grid
+    '''
+    n = len(dhs)-1
+    true_dhs = [dhs[k]*sigma_dh_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)]
+    dh_1D_object = scipy.interpolate.interp1d(dimensionless_frequency_nodes,true_dhs)
+    return dh_1D_object(dimensionless_frequency_grid)
+
+
+
+def remove_dphi_shifts(dimensionless_frequency_grid,injection,n,sigma_dphi_spline,asd_data,waveform_generator,**kwargs):
+    '''
+    Takes an injection of binary black hole and phase correction parameters and removes any time domain shifts from the phase deviation.
+
+    Parameters
+    ==================
+    dimensionless_frequency_grid: numpy.ndarray
+        array of dimensionless frequencies to evaluate the phase difference over
+    injection: dict
+        dictionary of binary black hole source parameters and phase correction parameters
+    n: int
+        number of frequency nodes excluding 0
+    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the dphi prior
+    asd_data: numpy.ndarray
+        array of amplitude spectral density data; assumes this is in the standard LIGO format
+    waveform_generator: bilby.gw.waveform_generator.WaveformGenerator
+        bilby waveform generator object
+    xi_max: float, optional
+        upper bound on the dimensionless frequency band
+        default: 1/pi, 0.318...
+    gamma: float, optional
+        smoothing parameter
+        default: 0.025
+
+    Returns
+    ==================
+    phase_difference_no_shifts: numpy.ndarray
+        input phase difference from injection with overall time and phase shifts removed; same shape as input dimensionless frequency grid
+    '''
+    xi_max = kwargs.get('xi_max',1/np.pi)
+    gamma = kwargs.get('gamma',0.025)
+    
+    dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde(injection['xi_0'],injection['delta_xi_tilde'],3,xi_max)
+    temp_dimensionless_frequency_grid = np.geomspace(dimensionless_frequency_nodes[0],dimensionless_frequency_nodes[-1],1000)
+    
+    dphis = [injection[f'dphi_{k}'] for k in range(0,n+1)]
+    phase_difference_1D = dh_1D(temp_dimensionless_frequency_grid,dimensionless_frequency_nodes,dphis,sigma_dphi_spline)
+    
+    reference_amplitude = np.sqrt(waveform_generator.frequency_domain_strain(parameters=injection)['plus']**2+waveform_generator.frequency_domain_strain(parameters=injection)['cross']**2)
+    total_mass = bilby.gw.conversion.generate_mass_parameters(injection)['total_mass']
+    reference_amplitude_interp = np.interp(temp_dimensionless_frequency_grid,convert_to_dimensionless_frequency(waveform_generator.frequency_array,total_mass),reference_amplitude)
+    psd_data_interp = np.interp(temp_dimensionless_frequency_grid,convert_to_dimensionless_frequency(asd_data[:,0],total_mass),asd_data[:,1]**2)
+    weights = np.abs(reference_amplitude_interp**2 / psd_data_interp)
+    fit = np.polyfit(temp_dimensionless_frequency_grid,phase_difference_1D,1,w=weights)
+    
+    phase_difference_no_shifts_1D = phase_difference_1D - np.poly1d(fit)(temp_dimensionless_frequency_grid)
+    phase_difference_no_shifts_interp = np.interp(dimensionless_frequency_grid,temp_dimensionless_frequency_grid,phase_difference_no_shifts_1D)
+    phase_difference_no_shifts = rolling_average(phase_difference_no_shifts_interp,gamma)
+    
+    return phase_difference_no_shifts
 
 
 
@@ -128,7 +250,6 @@ def BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_
     waveform_correction = (1+amplitude_correction)*np.exp(phase_correction*1j)
     
     return waveform_correction
-
 
 
 
