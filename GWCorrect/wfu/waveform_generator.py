@@ -1,14 +1,7 @@
 import numpy as np
 import bilby
-import random
-import time as tm
-import sys
 import scipy
-import lal
-from bilby.core import utils
-from bilby.core.series import CoupledTimeAndFrequencySeries
-from bilby.core.utils import PropertyAccessor
-from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
+import logging
 from .utils import smooth_interpolation,BBH_waveform_correction
 
 
