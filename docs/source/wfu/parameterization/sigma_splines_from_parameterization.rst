@@ -4,8 +4,7 @@ sigma_splines_from_parameterization
 .. code-block:: python
 
    GWCorrect.wfu.parameterization.sigma_splines_from_parameterization(parameterization,dimensionless=True,
-                                                                      xi_min=0.001,xi_max=0.318,
-                                                                      resolution=1000)
+   xi_min=0.001,xi_max=0.318,resolution=1000)
 
 Generates the standard deviations of the waveform correction priors and stores them in spline objects from a parameterization file.
 
