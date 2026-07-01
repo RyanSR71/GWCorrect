@@ -1,17 +1,11 @@
 import numpy as np
 import bilby
-import random
-import time
-import sys
 import scipy
-import lal
 import logging
 import tqdm
-from bilby.core import utils
-from bilby.core.series import CoupledTimeAndFrequencySeries
-from bilby.core.utils import PropertyAccessor
-from bilby.gw.conversion import convert_to_lal_binary_neutron_star_parameters
 from .utils import ProgressBar
+
+
 
 def fd_model_difference(hf1,hf2,**kwargs):
     '''
