@@ -8,6 +8,9 @@ Utility Functions
   ProgressBar
   rolling_average
   smooth_interpolation
+  dh_SI
+  dh_1D
+  remove_dphi_shifts
   BBH_waveform_correction
   delta_t_01
   epsilon_alpha
