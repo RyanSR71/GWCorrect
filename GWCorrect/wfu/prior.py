@@ -79,22 +79,29 @@ def conversion(input_parameters,**kwargs):
     '''
     n = kwargs.get('n',None)
     xi_max = kwargs.get('xi_max',1/np.pi)
-    total_mass = kwargs.get('total_mass',None)
+    fixed_total_mass = kwargs.get('total_mass',None)
     sigma_dA_spline = kwargs.get('sigma_dA_spline',None)
     
     parameters = input_parameters.copy()
     keys = list(parameters.keys())
-    if total_mass is None:
+    if fixed_total_mass is None:
         parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
     else:
-        parameters['total_mass'] = total_mass
+        parameters['total_mass'] = fixed_total_mass
     if n is not None:
         if ('xi_0' and 'delta_xi_tilde') in keys:
             parameters['delta_t_01'] = delta_t_01_from_frequency_node_parameters(parameters['xi_0'],parameters['delta_xi_tilde'],parameters['total_mass'],n,xi_max)
             if sigma_dA_spline is not None:
-                if 'dA_0' in keys:
-                    dAs = [parameters[f'dA_{k}'] for k in range(0,n+1)]
-                    parameters['epsilon_alpha'] = epsilon_alpha_conversion(dAs,parameters['xi_0'],parameters['delta_xi_tilde'],xi_max,sigma_dA_spline)
+                if 'dA_1' in keys:
+                    if hasattr(parameters['dA_1'],'__len__'):
+                        epsilon_alphas = []
+                        for i in range(len(parameters['dA_1'])):
+                            dAs = [0]+[parameters[f'dA_{k}'][i] for k in range(1,n+1)]
+                            epsilon_alphas.append(epsilon_alpha_conversion(dAs,parameters['xi_0'][i],parameters['delta_xi_tilde'][i],xi_max,sigma_dA_spline))
+                        parameters['epsilon_alpha'] = np.array(epsilon_alphas)
+                    else:
+                        dAs = [0]+[parameters[f'dA_{k}'] for k in range(1,n+1)]
+                        parameters['epsilon_alpha'] = epsilon_alpha_conversion(dAs,parameters['xi_0'],parameters['delta_xi_tilde'],xi_max,sigma_dA_spline)
     return parameters
 
 
