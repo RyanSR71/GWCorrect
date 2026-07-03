@@ -1,7 +1,6 @@
 import numpy as np
 import scipy
 import bilby
-from .prior import conversion
 
 def convert_to_dimensionless_frequency(frequencies,total_mass):
     '''
