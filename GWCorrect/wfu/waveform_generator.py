@@ -2,6 +2,7 @@ import numpy as np
 import bilby
 import scipy
 import logging
+from bilby.core.utils import logger
 from .utils import smooth_interpolation,BBH_waveform_correction
 
 
