@@ -340,7 +340,7 @@ def binary_black_hole_ppE_conversion(parameters):
     delta_epsilon_tilde_keys = [key for key in parameters if 'delta_epsilon_tilde_' in key]
     b_keys = [key for key in parameters if 'b_' in key]
     
-    if len(beta_tilde_keys) != len(delta_epsilon_tilde_keys) != len(b_keys):
+    if len(beta_tilde_keys) != len(delta_epsilon_tilde_keys) or len(beta_tilde_keys) != len(b_keys):
         raise Exception(f'Unequal numbers of ppE parameters given! beta_tildes: {len(beta_tilde_keys)} delta_epsilon_tildes: {len(delta_epsilon_tilde_keys)} bs: {len(b_keys)}')
 
     n = len(b_keys)
