@@ -2,11 +2,11 @@ import numpy as np
 from numpy.linalg import inv
 import bilby
 import random
-import time as tm
 import sys
 import scipy
 import lal
 import math
+from bilby.core.utils import logger
 from .utils import inversion_function, beta_from_beta_tilde_wrapped, apply_ppe_correction
 
 def ppECorrectionModel(
