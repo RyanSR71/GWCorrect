@@ -272,7 +272,7 @@ def integral_Ib(p_0, exponent_b):
 def integral_Ib_plus(p_0, p_1, exponent_b):
     b = exponent_b
     if b != 4:
-        return 4.0 * p_0 * (1 - pow(p_1, b-4)) / (4.0 - b)
+        return 4.0 * p_0 ** 4 * (1 - pow(p_1, b-4)) / (4.0 - b)
     else: # b == 4:
         return 4.0 * p_0 ** 4 * np.log(p_1)
     
