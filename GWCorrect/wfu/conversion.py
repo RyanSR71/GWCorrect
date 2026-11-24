@@ -20,6 +20,8 @@ def convert_to_dimensionless_frequency(frequencies,total_mass):
     '''
     return 0.000004925490947641267*total_mass*frequencies
 
+
+
 def convert_to_SI_frequency(dimensionless_frequencies,total_mass):
     '''
     Converts mass-weighted dimensionless frequency to SI frequency.
@@ -38,107 +40,150 @@ def convert_to_SI_frequency(dimensionless_frequencies,total_mass):
     '''
     return 203025.4467280836*dimensionless_frequencies/total_mass
 
-def dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde(xi_0,delta_xi_tilde,n,xi_max):
+
+
+def dimensionless_frequency_nodes_from_delta_xis(xi_0,xi_n,delta_xis):
     '''
-    Converts xi_0 and delta_xi_tilde to frequency nodes in mass-weighted dimensionless frequency.
+    Generates all frequency nodes in dimensionless frequency
 
     Parameters
     ==================
     xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency_node_spacing_parameter
-    n: int
-        number of frequency nodes excluding 0
-    xi_max: float
-        upper bound on the dimensionless frequency band
+        position of the zeroth frequency node in dimensionless frequency
+    xi_n: float
+        position of the nth (last) frequency node in dimensionless frequency
+    delta_xis: list or numpy.ndarray
+        list of the inner frequency node parameters; there must be at least one
 
     Returns
     ==================
     dimensionless_frequency_nodes: numpy.ndarray
-        array of dimensionless frequency nodes from xi_0 to xi_n
+        array of dimensionless_frequency_nodes
     '''
-    dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/xi_0)*delta_xi_tilde)**(k/n) for k in range(0,n+1)])
+    n = len(delta_xis)+1
+    if n == 2:
+        xi_1 = xi_0**(1-delta_xis[0])*xi_n**(delta_xis[0])
+        dimensionless_frequency_nodes = np.array([xi_0,xi_1,xi_n])
+    else:
+        xi_matrix = np.zeros((n-1,n-1))
+        for l in range(0,n-1):
+            for k in range(0,n-1):
+                if k == l:
+                    xi_matrix[k,l] = 1
+                elif k == l-1:
+                    xi_matrix[k,l] = -delta_xis[k]
+                elif k == l+1:
+                    xi_matrix[k,l] = delta_xis[k]-1
+        column = np.zeros(n-1)
+        column[0] = np.log(xi_0)*(1-delta_xis[0])
+        column[-1] = np.log(xi_n)*delta_xis[-1]
+        xis = np.exp(np.linalg.solve(xi_matrix,column))
+        dimensionless_frequency_nodes = np.array([xi_0]+list(xis)+[xi_n])
+        
     return dimensionless_frequency_nodes
 
-def delta_t_01_from_frequency_node_parameters(xi_0,delta_xi_tilde,total_mass,n,xi_max):
+
+
+def conversion(input_parameters,**kwargs):
     '''
-    Computes delta_t_01.
+    Conversion function to generate constrained parameters: total_mass, epsilon_f, and epsilon_alpha
 
     Parameters
     ==================
-    xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency node spacing parameter
-    total_mass: float
-        total system mass (m_1+m_2)
-    n: int
-        number of frequency nodes excluding 0
-    xi_max: float
-        upper bound on the dimensionless frequency band
+    input_parameters: dict
+        dictionary of BBH source and correction parameters
+    n: int, optional
+        number of frequency nodes excluding zero; required for epsilon_f and epsilon_alpha calculations
+        default: None
+    fixed_total_mass: float, optional
+        total_mass value for epsilon_f and epsilon_alpha calculations if the total mass is not being sampled in the prior
+        default: None
+    sigma_A_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the standard deviation of the amplitude correction prior; required for epsilon_alpha calculation
+        default: None
+    gamma: float
+        smoothing parameter for the smooth interpolation function
+        default: 0.025
+    duration: float
+        observation time duration of the gravitational-wave signal; required for epsilon_f calculation
+        default: None
 
     Returns
     ==================
-    delta_t_01: float
-        delta_t_01 value
+    parameters: dict
+        dictionary of input parameters plus total mass, epsilon_f, and/or epsilon_alpha; this depends on kwargs
     '''
-    delta_t_01 = 0.000004925490947641267*n*total_mass/((xi_max-xi_0)*delta_xi_tilde)
-
-    return delta_t_01
-
-
-def delta_t_01_posterior(result,n,xi_max):
-    '''
-    Computes delta_t_01 from a bilby result object. Used to add delta_t_01 to the posterior.
-
-    Parameters
-    ==================
-    result: bilby.core.result.Result
-        bilby result object
-    n: int
-        number of frequency nodes excluding 0
-    xi_max: float
-        upper bound on the dimensionless frequency band
-
-    Returns
-    ==================
-    delta_t_01_posterior: numpy.ndarray
-        delta_t_01 posterior samples
-    '''
-    delta_t_01_posterior = delta_t_01_from_frequency_node_parameters(result.posterior['xi_0'],result.posterior['delta_xi_tilde'],result.posterior['total_mass'],n,xi_max)
-    return delta_t_01_posterior
-
-
-
-def epsilon_alpha_conversion(dAs,xi_0,delta_xi_tilde,xi_max,sigma_dA_spline):
-    '''
-    Computes epsilon_alpha up to 1.
-
-    Parameters
-    ==================
-    dAs: list or numpy.ndarray
-        list of dA parameters including dA_0
-    xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency node spacing parameter
-    xi_max: float
-        upper bound on the dimensionless frequency band
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dA prior
-
-    Returns
-    ==================
-    epsilon_alpha: float
-        amplitude error parameter
-    '''
-    n = len(dAs)-1
-    dimensionless_frequency_nodes = [xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**k/n for k in range(0,n+1)]
-    true_dAs = [dAs[k]*sigma_dA_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)] 
-    counter = n
-    if any(x < 0 for x in list(np.array(true_dAs)+1)):
-        counter -= 1
-    epsilon_alpha = n-counter
+    n = kwargs.get('n',None)
+    fixed_total_mass = kwargs.get('total_mass',None)
+    sigma_A_spline = kwargs.get('sigma_A_spline',None)
+    gamma = kwargs.get('gamma',0.025)
+    duration = kwargs.get('duration',None)
     
-    return epsilon_alpha
+    parameters = input_parameters.copy()
+    keys = list(parameters.keys())
+    if fixed_total_mass is None:
+        parameters['total_mass'] = bilby.gw.conversion.generate_mass_parameters(parameters)['total_mass']
+    else:
+        if hasattr(parameters[keys[0]],'__len__'):
+            parameters['total_mass'] = np.array([fixed_total_mass]*len(parameters[keys[0]]))
+        else:
+            parameters['total_mass'] = fixed_total_mass
+    if n is not None:
+        if hasattr(parameters[keys[0]],'__len__'):
+            epsilon_f = []
+            epsilon_alpha = []
+            for i in range(len(parameters[keys[0]])):
+                delta_f = 0
+                delta_xis = [parameters[f'delta_xi_{k}'][i] for k in range(1,n)]
+                total_mass = parameters['total_mass'][i]
+                xi_0 = parameters['xi_0'][i]
+                xi_n = parameters['xi_n'][i]
+                dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_delta_xis(xi_0,xi_n,delta_xis)
+                delta_f_0n = wfu.conversion.convert_to_SI_frequency(xi_n-xi_0,total_mass)
+                if delta_f_0n < 4*n/duration:
+                    delta_f += 1
+                for k in range(1,n+1):
+                    delta_f_jk = wfu.conversion.convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
+                    if delta_f_jk < 4/duration:
+                        delta_f += 1
+                epsilon_f.append(delta_f)
+                
+                if sigma_A_spline is not None:
+                    alpha_tildes = [0]+[parameters[f'alpha_tilde_{k}'][i] for k in range(1,n+1)]
+                    alphas = np.array(alpha_tildes)*sigma_A_spline(dimensionless_frequency_nodes)
+                    if any(alphas[k] < -1 for k in range(n+1)):
+                        epsilon_alpha.append(1)
+                    else:
+                        epsilon_alpha.append(0)
+                else:
+                    epsilon_alpha.append(0)
+                    
+            epsilon_f = np.array(epsilon_f)
+            epsilon_alpha = np.array(epsilon_alpha)
+            
+        else:
+            epsilon_f = 0
+            delta_xis = [parameters[f'delta_xi_{k}'] for k in range(1,n)]
+            total_mass = parameters['total_mass']
+            xi_0 = parameters['xi_0']
+            xi_n = parameters['xi_n']
+            dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_delta_xis(xi_0,xi_n,delta_xis)
+            delta_f_0n = wfu.conversion.convert_to_SI_frequency(xi_n-xi_0,total_mass)
+            if delta_f_0n < 4*n/duration:
+                epsilon_f += 1
+            for k in range(1,n+1):
+                delta_f_jk = wfu.conversion.convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
+                if delta_f_jk < 4/duration:
+                    epsilon_f += 1
+            
+            epsilon_alpha = 0
+            if sigma_A_spline is not None:
+                alpha_tildes = [0]+[parameters[f'alpha_tilde_{k}'] for k in range(1,n+1)]
+                alphas = np.array(alpha_tildes)*sigma_A_spline(dimensionless_frequency_nodes)
+                if any(alphas[k] < -1 for k in range(n+1)):
+                    epsilon_alpha += 1
+                    
+        parameters['epsilon_f'] = epsilon_f
+        parameters['epsilon_alpha'] = epsilon_alpha
+        
+    return parameters
