@@ -31,7 +31,7 @@ def fd_model_difference(hf1,hf2,**kwargs):
         default: None
     correction_parameter: float, optional
         fraction of maximum amplitude to cut off the amplitude at
-        default: 0.0001
+        default: 0.001
     ref_amplitude: numpy.ndarray, optional
         array of gravitational waveform amplitude
         default None
@@ -49,7 +49,7 @@ def fd_model_difference(hf1,hf2,**kwargs):
     npoints = kwargs.get('npoints',None)
     polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
-    correction_parameter = kwargs.get('correction_parameter',0.0001)
+    correction_parameter = kwargs.get('correction_parameter',0.001)
     ref_amplitude = kwargs.get('ref_amplitude',None)
 
     minimum_frequency = hf1.waveform_arguments['minimum_frequency']
@@ -269,70 +269,9 @@ def recovery_from_parameterization(parameterization_draw, **kwargs):
 
 
 
-def uncertainties_from_parameterization(parameterization, **kwargs):
+def split_gaussian_parameters_from_parameterization(parameterization,**kwargs):
     '''
-    Takes in an entire parameterization matrix and returns the Gaussian parameters for the amplitude and phase differences
-
-    Parameters:
-    ==================
-    parameterization: numpy.ndarry
-        parameterization matrix
-    dimensionless: bool, optional
-        whether or not the output is returned in dimensionless frequency units
-        Default: True
-    xi_min: float, optional
-        if dimensionless is True, this is the lower bound on the dimensionless frequency grid
-        default: 0.001
-    xi_max: float, optional
-        if dimensionless is True, this is the upper bound on the dimensionless frequency grid
-        default: 1/pi, 0.318...
-    resolution: int, optional
-        if dimensionless is True, this is the number of points in the dimensionless frequency grid
-        default: 1000
-
-    Returns:
-    ==================
-    mean_amplitude_difference: numpy.ndarray
-        array of the mean amplitude differences as a function of frequency
-    amplitude_uncertainty: numpy.ndarray
-        array of the standard deviation of the amplitude differences across frequency
-    mean_phase_difference: numpy.ndarry
-        array of the mean phase differences as a function of frequency
-    phase_uncertainty: numpy.ndarray
-        array of the stand deviation of the phase differences across frequency
-    frequency_grid: numpy.ndarray
-        array of frequencies (dimensionless or SI) that corresponds to the other output quantities
-    '''
-    dimensionless = kwargs.get('dimensionless',True)
-    xi_min = kwargs.get('xi_min',0.001)
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    resolution = kwargs.get('resolution',1000)
-    
-    total_dAs = []
-    total_dphis = []
-    
-    for i in range(len(parameterization)):
-        frequency_grid,amplitude_difference,phase_difference = recovery_from_parameterization(parameterization[i],
-                                                                                              dimensionless=dimensionless,
-                                                                                             xi_min=xi_min,xi_max=xi_max,
-                                                                                             resolution=resolution)
-        
-        total_dAs.append(amplitude_difference)
-        total_dphis.append(phase_difference)
-    
-    mean_amplitude_difference = np.mean(total_dAs,axis=0)
-    amplitude_uncertainty = np.std(total_dAs,axis=0)
-    
-    mean_phase_difference = np.mean(total_dphis,axis=0)
-    phase_uncertainty = np.std(total_dphis,axis=0)
-    
-    return mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty,frequency_grid
-
-
-
-def sigma_splines_from_parameterization(parameterization,**kwargs):
-    '''
-    Generates the standard deviations of the waveform correction priors from a parameterization file.
+    Calculates the split-Gaussian parameters from a parameterization file for both the amplitude and phase differences.
 
     Parameters
     ==================
@@ -353,22 +292,114 @@ def sigma_splines_from_parameterization(parameterization,**kwargs):
 
     Returns
     ==================
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dA prior
-    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dphi prior
+    dimensionless_frequency_grid: numpy.ndarray
+        array of dimensionless frequency values corresponding to the output arrays
+    dA_minus: numpy.ndarray
+        standard deviation below the median amplitude difference
+    median_dA: numpy.ndarray
+        median amplitude difference values
+    dA_plus: numpy.ndarray
+        standard deviation above the median amplitude difference
+    dphi_minus: numpy.ndarray
+        standard deviation below the median phase difference
+    median_dphi: numpy.ndarray
+        median phase difference values
+    dphi_plus: numpy.ndarray
+        standard deviation above the median phase difference    
     '''
     dimensionless = kwargs.get('dimensionless',True)
     xi_min = kwargs.get('xi_min',0.001)
     xi_max = kwargs.get('xi_max',1/np.pi)
     resolution = kwargs.get('resolution',1000)
     
-    mean_amplitude_difference,amplitude_uncertainty,mean_phase_difference,phase_uncertainty,nodes = uncertainties_from_parameterization(parameterization,dimensionless=dimensionless,xi_min=xi_min,xi_max=xi_max,resolution=resolution)
+    amplitude_differences = []
+    phase_differences = []
+    for i in range(len(parameterization)):
+        dimensionless_frequency_grid,amplitude_difference,phase_difference = recovery_from_parameterization(parameterization[i],dimensionless=dimensionless,
+                                                                                                            xi_min=xi_min,xi_max=xi_max,resolution=resolution)
+        
+        amplitude_differences.append(amplitude_difference)
+        phase_differences.append(phase_difference)
     
-    sigma_dA = np.sqrt(mean_amplitude_difference**2 + amplitude_uncertainty**2)
-    sigma_dphi = np.sqrt(mean_phase_difference**2 + phase_uncertainty**2)
+    dA_plus = []
+    dA_minus = []
+    median_dA = []
     
-    sigma_dA_spline = scipy.interpolate.CubicSpline(nodes,sigma_dA)
-    sigma_dphi_spline = scipy.interpolate.CubicSpline(nodes,sigma_dphi)
+    dphi_plus = []
+    dphi_minus = []
+    median_dphi = []
     
-    return sigma_dA_spline, sigma_dphi_spline
+    for i in range(len(amplitude_differences[0])):
+        dA_data = []
+        dphi_data = []
+        for j in range(len(amplitude_differences)):
+            dA_data.append(amplitude_differences[j][i])
+            dphi_data.append(phase_differences[j][i])
+        dA_data = np.array(dA_data)
+        dphi_data = np.array(dphi_data)
+
+        dA_15,dA_50,dA_84 = np.percentile(dA_data,np.array([15.865,50,84.135]))
+        dphi_15,dphi_50,dphi_84 = np.percentile(dphi_data,np.array([15.865,50,84.135]))
+
+        dA_plus.append(dA_84-dA_50)
+        dA_minus.append(dA_50-dA_15)
+        median_dA.append(dA_50)
+        
+        dphi_plus.append(dphi_84-dphi_50)
+        dphi_minus.append(dphi_50-dphi_15)
+        median_dphi.append(dphi_50)
+        
+    return dimensionless_frequency_grid, np.array(dA_minus), np.array(median_dA), np.array(dA_plus), np.array(dphi_minus), np.array(median_dphi), np.array(dphi_plus)
+
+
+
+def sigma_splines_from_parameterization(parameterization,**kwargs):
+    '''
+    Generates splines encoding the total standard deviations for the amplitude and phase correction priors
+
+    Parameters
+    ==================
+    parameterization: numpy.ndarray
+        parameterization file from GWCorrect.wfu.parameterization.parameterization
+    dimensionless: bool, optional
+        whether or not the output is returned in dimensionless frequency units
+        Default: True
+    xi_min: float, optional
+        if dimensionless is True, this is the lower bound on the dimensionless frequency grid
+        default: 0.001
+    xi_max: float, optional
+        if dimensionless is True, this is the upper bound on the dimensionless frequency grid
+        default: 1/pi, 0.318...
+    resolution: int, optional
+        if dimensionless is True, this is the number of points in the dimensionless frequency grid
+        default: 1000
+
+    Returns
+    ==================
+    sigma_A_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the total standard deviation of the amplitude correction prior
+    sigma_phi_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the total standard deviation of the phase correction prior
+    '''
+    dimensionless = kwargs.get('dimensionless',True)
+    xi_min = kwargs.get('xi_min',0.001)
+    xi_max = kwargs.get('xi_max',1/np.pi)
+    resolution = kwargs.get('resolution',1000)
+    
+    dimensionless_frequency_grid, dA_minus, median_dA, dA_plus, dphi_minus, median_dphi, dphi_plus = split_gaussian_parameters_from_parameterization(parameterization,
+                                                                                                                                                     dimensionless=dimensionless,
+                                                                                                                                                     xi_min=xi_min,xi_max=xi_max,
+                                                                                                                                                     resolution=resolution)
+        
+    total_dA_variance = (1-2/np.pi)*(dA_plus-dA_minus)**2+dA_plus*dA_minus
+    total_dphi_variance = (1-2/np.pi)*(dphi_plus-dphi_minus)**2+dphi_plus*dphi_minus
+    
+    sigma_A = np.sqrt(median_dA**2+total_dA_variance)
+    sigma_phi = np.sqrt(median_dphi**2+total_dphi_variance)
+    
+    spline_nodes = dimensionless_frequency_grid.copy()
+    
+    sigma_A_spline = scipy.interpolate.CubicSpline(spline_nodes,sigma_A)
+    sigma_phi_spline = scipy.interpolate.CubicSpline(spline_nodes,sigma_phi)
+    
+    return sigma_A_spline, sigma_phi_spline
