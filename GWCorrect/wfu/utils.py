@@ -3,7 +3,7 @@ import bilby
 import scipy
 import tqdm
 import logging
-from .conversion import dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde,convert_to_dimensionless_frequency
+from .conversion import convert_to_dimensionless_frequency, convert_to_SI_frequency
 
 
 
@@ -81,179 +81,73 @@ def smooth_interpolation(full_grid,nodes,parameters,gamma):
 
 
 
-def dh_SI(dimensionless_frequency_grid,dimensionless_frequency_nodes,dhs,sigma_dh_spline,**kwargs):
+def amplitude_difference_from_parameters(frequency_array,dimensionless_frequency_nodes,alpha_tildes,sigma_A_spline,mass_1,mass_2,gamma):
     '''
-    Smooth interpolation function for the waveform correction parameters.
-
-    Parameters
-    ==================
-    dimensionless_frequency_grid: numpy.ndarray
-        array of mass-weighted dimensionless frequencies
-    dimensionless_frequency_nodes: list or numpy.ndarray
-        list of dimensionless frequency nodes
-    dhs: list or numpy.ndarray
-        rescaled waveform correction parmaters, either dA or dphi
-    sigma_dh_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dh prior, either dA or dphi
-    gamma: float, optional
-        smoothing parameters
-        default: 0.025
-
-    Returns
-    ==================
-    dh_smooth_interpolation: numpy.ndarray
-        dA or dphi smooth interpolation array corresponding to the input dimensionless frequency grid
-    '''
-    gamma = kwargs.get('gamma',0.025)
-    n = len(dhs)-1
-    true_dhs = [dhs[k]*sigma_dh_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)]
-    dh_SI = smooth_interpolation(dimensionless_frequency_grid,dimensionless_frequency_nodes,true_dhs,gamma)
-    return dh_SI
-
-
-
-def dh_1D(dimensionless_frequency_grid,dimensionless_frequency_nodes,dhs,sigma_dh_spline):
-    '''
-    1D interpolation function for the waveform correction parameters.
-
-    Parameters
-    ==================
-    dimensionless_frequency_grid: numpy.ndarray
-        array of mass-weighted dimensionless frequencies
-    dimensionless_frequency_nodes: list or numpy.ndarray
-        list of dimensionless frequency nodes
-    dhs: list or numpy.ndarray
-        rescaled waveform correction parmaters, either dA or dphi
-    sigma_dh_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dh prior, either dA or dphi
-
-    Returns
-    ==================
-    dh_1D_interpolation: numpy.ndarray
-        dA or dphi 1D interpolation array corresponding to the input dimensionless frequency grid
-    '''
-    n = len(dhs)-1
-    true_dhs = [dhs[k]*sigma_dh_spline(dimensionless_frequency_nodes[k]) for k in range(0,n+1)]
-    dh_1D_object = scipy.interpolate.interp1d(dimensionless_frequency_nodes,true_dhs)
-    return dh_1D_object(dimensionless_frequency_grid)
-
-
-
-def remove_dphi_shifts(dimensionless_frequency_grid,injection,n,sigma_dphi_spline,asd_data,waveform_generator,**kwargs):
-    '''
-    Takes an injection of binary black hole and phase correction parameters and removes any time domain shifts from the phase deviation.
-
-    Parameters
-    ==================
-    dimensionless_frequency_grid: numpy.ndarray
-        array of dimensionless frequencies to evaluate the phase difference over
-    injection: dict
-        dictionary of binary black hole source parameters and phase correction parameters
-    n: int
-        number of frequency nodes excluding 0
-    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dphi prior
-    asd_data: numpy.ndarray
-        array of amplitude spectral density data; assumes this is in the standard LIGO format
-    waveform_generator: bilby.gw.waveform_generator.WaveformGenerator
-        bilby waveform generator object
-    xi_max: float, optional
-        upper bound on the dimensionless frequency band
-        default: 1/pi, 0.318...
-    gamma: float, optional
-        smoothing parameter
-        default: 0.025
-
-    Returns
-    ==================
-    phase_difference_no_shifts: numpy.ndarray
-        input phase difference from injection with overall time and phase shifts removed; same shape as input dimensionless frequency grid
-    '''
-    xi_max = kwargs.get('xi_max',1/np.pi)
-    gamma = kwargs.get('gamma',0.025)
-    
-    dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_xi_0_delta_xi_tilde(injection['xi_0'],injection['delta_xi_tilde'],3,xi_max)
-    temp_dimensionless_frequency_grid = np.geomspace(dimensionless_frequency_nodes[0],dimensionless_frequency_nodes[-1],1000)
-    
-    dphis = [injection[f'dphi_{k}'] for k in range(0,n+1)]
-    phase_difference_1D = dh_1D(temp_dimensionless_frequency_grid,dimensionless_frequency_nodes,dphis,sigma_dphi_spline)
-    
-    reference_amplitude = np.sqrt(waveform_generator.frequency_domain_strain(parameters=injection)['plus']**2+waveform_generator.frequency_domain_strain(parameters=injection)['cross']**2)
-    total_mass = bilby.gw.conversion.generate_mass_parameters(injection)['total_mass']
-    reference_amplitude_interp = np.interp(temp_dimensionless_frequency_grid,convert_to_dimensionless_frequency(waveform_generator.frequency_array,total_mass),reference_amplitude)
-    psd_data_interp = np.interp(temp_dimensionless_frequency_grid,convert_to_dimensionless_frequency(asd_data[:,0],total_mass),asd_data[:,1]**2)
-    weights = np.abs(reference_amplitude_interp**2 / psd_data_interp)
-    fit = np.polyfit(temp_dimensionless_frequency_grid,phase_difference_1D,1,w=weights)
-    
-    phase_difference_no_shifts_1D = phase_difference_1D - np.poly1d(fit)(temp_dimensionless_frequency_grid)
-    phase_difference_no_shifts_interp = np.interp(dimensionless_frequency_grid,temp_dimensionless_frequency_grid,phase_difference_no_shifts_1D)
-    phase_difference_no_shifts = rolling_average(phase_difference_no_shifts_interp,gamma)
-    
-    return phase_difference_no_shifts
-
-
-
-def BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,sigma_dA_spline,sigma_dphi_spline,mass_1,mass_2,xi_max,gamma):
-    '''
-    Computes (1+dA)exp(idphi) from the frequency node and correction parameters.
+    Generates the amplitude correction from the frequency nodes and amplitude correction parameters
 
     Parameters
     ==================
     frequency_array: numpy.ndarray
-        frequency grid over which to generate the waveform correction
-    xi_0: float
-        starting frequency node parameter
-    delta_xi_tilde: float
-        frequency node spacing parameter
-    dAs: list or numpy.ndarray
-        list of dA (alpha_tilde) parameters
-    dphis: list or numpy.ndarray
-        list of dphi (varphi_tilde) parameters
-    sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dA prior
-    sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
-        scipy cubic spline object encoding the standard deviation of the dphi prior
+        array of SI frequency points over which to generate the amplitude correction
+    dimensionless_frequency_nodes: numpy.ndarray
+        array of frequency nodes in dimensionless frequency nodes
+    alpha_tildes: list
+        list of rescaled amplitude correction parameters
+    sigma_A_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the total standard deviation of the amplitude correction prior
     mass_1: float
-        mass of the primary body in the binary
+        primary mass in solar masses
     mass_2: float
-        mass of the secondary body in the binary
-    xi_max: float
-        upper bound on the dimensionless frequency grid
+        secondary mass in solar masses
     gamma: float
         smoothing parameter for the smooth interpolation function
-
-    Returns
-    ==================
-    waveform_correction: numpy.ndarray
-        (1+dA)exp(idphi) array to multiply to frequency domain gravitational-wave strain; same shape as frequency_array input
     '''
-    n = len(dAs)-1
+    n = len(alpha_tildes)-1
     total_mass = mass_1+mass_2
-    dimensionless_frequency_nodes = np.array([xi_0*(1+((xi_max-xi_0)/(xi_0))*delta_xi_tilde)**(k/n) for k in range(n+1)])
     dimensionless_frequency_array = np.linspace(dimensionless_frequency_nodes[0],dimensionless_frequency_nodes[-1],len(frequency_array))
-    
-    if sigma_dA_spline is not None:
-        sigma_dA = sigma_dA_spline(dimensionless_frequency_nodes)
-    else: 
-        sigma_dA = np.ones(n+1)
-    if sigma_dphi_spline is not None:
-        sigma_dphi = sigma_dphi_spline(dimensionless_frequency_nodes)
-    else:
-        sigma_dphi = np.ones(n+1)
-    
-    amplitude_correction = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,dAs*sigma_dA,gamma)
-    amplitude_correction = np.interp(frequency_array,dimensionless_frequency_array*203025.4467280836/total_mass,amplitude_correction)
-    
-    phase_correction = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,dphis*sigma_dphi,gamma)
-    phase_correction = np.interp(frequency_array,dimensionless_frequency_array*203025.4467280836/total_mass,phase_correction)
-    
-    waveform_correction = (1+amplitude_correction)*np.exp(phase_correction*1j)
-    
-    return waveform_correction
+    sigma_A = sigma_A_spline(dimensionless_frequency_nodes)
+
+    amplitude_difference_in_dimensionless_frequency = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,alpha_tildes*sigma_A,gamma)
+    amplitude_difference = np.interp(frequency_array,convert_to_SI_frequency(dimensionless_frequency_array,total_mass),amplitude_difference_in_dimensionless_frequency)
+
+    return amplitude_difference
 
 
 
-def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
+def phase_difference_from_parameters(frequency_array,dimensionless_frequency_nodes,phi_tildes,sigma_phi_spline,mass_1,mass_2,gamma):
+    '''
+    Generates the phase correction from the frequency nodes and phase correction parameters
+
+    Parameters
+    ==================
+    frequency_array: numpy.ndarray
+        array of SI frequency points over which to generate the phase correction
+    dimensionless_frequency_nodes: numpy.ndarray
+        array of frequency nodes in dimensionless frequency nodes
+    phi_tildes: list
+        list of rescaled phase correction parameters
+    sigma_phi_spline: scipy.interpolate._cubic.CubicSpline
+        scipy cubic spline object encoding the total standard deviation of the phase correction prior
+    mass_1: float
+        primary mass in solar masses
+    mass_2: float
+        secondary mass in solar masses
+    gamma: float
+        smoothing parameter for the smooth interpolation function
+    '''
+    n = len(phi_tildes)-1
+    total_mass = mass_1+mass_2
+    dimensionless_frequency_array = np.linspace(dimensionless_frequency_nodes[0],dimensionless_frequency_nodes[-1],len(frequency_array))
+    sigma_phi = sigma_phi_spline(dimensionless_frequency_nodes)
+
+    phase_difference_in_dimensionless_frequency = smooth_interpolation(dimensionless_frequency_array,dimensionless_frequency_nodes,phi_tildes*sigma_phi,gamma)
+    phase_difference = np.interp(frequency_array,convert_to_SI_frequency(dimensionless_frequency_array,total_mass),phase_difference_in_dimensionless_frequency)
+
+    return phase_difference
+
+
+
+def A_ASD_solutions(waveform_generator,asd_data,prior,minimum_frequency,maximum_frequency,samples,desc):
     '''
     Computes the distributions in dimensionless frequency where waveforms cross detector noise.
 
@@ -265,6 +159,10 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
         array of amplitude spectral density data; assumes standard LIGO formatting
     prior: bilby.core.prior.PriorDict
         bilby prior object to draw BBH parameters from
+    minimum_frequency: float
+        lower bound on the SI frequency band
+    maximum_frequency: float
+        upper bound on the SI frequency band
     samples: int
         number of waveforms to draw
     desc: string
@@ -289,14 +187,14 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
         geometrized_frequency_grid = np.geomspace(0.001,1/np.pi,1000)
         amplitude = np.abs(waveform_generator.frequency_domain_strain(parameters=injection)['plus'])
         M = bilby.gw.conversion.generate_mass_parameters(injection)['total_mass']
-        freqs = waveform_generator.frequency_array/float(203025.4467280836/M)
+        freqs = convert_to_dimensionless_frequency(waveform_generator.frequency_array,M)
         
         zero_indices = np.where(amplitude==0)[0]
         amplitude = np.delete(amplitude,zero_indices)
         freqs = np.delete(freqs,zero_indices)
         
-        effective_amplitude = np.interp(geometrized_frequency_grid,freqs,2*amplitude*np.sqrt(freqs)*np.sqrt(float(203025.4467280836/M)))
-        ASD = np.interp(geometrized_frequency_grid,asd_data[:,0]/float(203025.4467280836/M),asd_data[:,1])
+        effective_amplitude = np.interp(geometrized_frequency_grid,freqs,2*amplitude*np.sqrt(waveform_generator.frequency_array))
+        ASD = np.interp(geometrized_frequency_grid,convert_to_dimensionless_frequency(asd_data[:,0],M),asd_data[:,1])
         nodes = np.linspace(0,len(geometrized_frequency_grid)-1,100).astype(int)
         parameters = (effective_amplitude-ASD)[nodes]
         spline = scipy.interpolate.CubicSpline(geometrized_frequency_grid[nodes],parameters)
@@ -304,8 +202,14 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc):
         try:
             if roots[0] > 0 and roots[-1] < 1/np.pi:
                 if len(roots)>1:
-                    lower_xis.append(roots[0])
-                    upper_xis.append(roots[-1])
+                    for root in roots:
+                        if root > convert_to_dimensionless_frequency(minimum_frequency,M):
+                            lower_xis.append(root)
+                            break
+                    for root in roots[::-1]:
+                        if root < convert_to_dimensionless_frequency(maximum_frequency,M):
+                            upper_xis.append(root)
+                            break
                 else:
                     upper_xis.append(roots[0])
         except:
@@ -340,7 +244,7 @@ def gaussian(x, N, mu, sigma):
 
 
 
-def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max):
+def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis):
     '''
     Computes the gaussian fits for the xi_0 and delta_xi_tilde priors. To be used in conjunction with GWCorrect.wfu.utils.A_ASD_solutions
 
@@ -350,44 +254,27 @@ def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis,xi_max):
         lower_xis from GWCorrect.wfu.utils.A_ASD_solutions
     upper_xis: list
         upper_xis from GWCorrect.wfu.utils.A_ASD_solutions
-    xi_max: float
-        upper bound on the dimensionless frequency band
 
     Returns
     ==================
-    mu1: float
+    mu_0: float
         mean of the lower_xis distribution
-    sigma1: float
+    sigma_0: float
         standard deviation of the lower_xis distribution
-    mu2: float
+    mu_n: float
         mean of the upper_xis distribution
-    sigma2: float
+    sigma_n: float
         standard deviation of the upper_xis distribution
-    mu: float
-        mean of the delta_xi_tilde distribution
-    sigma: float
-        standard deviation of the delta_xi_tilde distribution
     '''
-    lower=lower_xis.copy()
-    upper=upper_xis.copy()
-    while len(lower) != len(upper):
-        upper.pop(0)
-
-    delta_xi_tilde = (np.array(upper)-np.array(lower))/(xi_max-np.array(lower))
 
     counts, edges = np.histogram(lower_xis, bins=100, density=True)
     centers = 0.5 * (edges[:-1] + edges[1:])
     popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.01, 0.01])
-    _, mu1, sigma1 = popt
+    _, mu_0, sigma_0 = popt
 
     counts, edges = np.histogram(upper_xis, bins=100, density=True)
     centers = 0.5 * (edges[:-1] + edges[1:])
     popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.1, 0.01])
-    _, mu2, sigma2 = popt
-
-    counts, edges = np.histogram(delta_xi_tilde, bins=100, density=True)
-    centers = 0.5 * (edges[:-1] + edges[1:])
-    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.3, 0.1])
-    _, mu, sigma = popt
+    _, mu_n, sigma_n = popt
     
-    return mu1, np.abs(sigma1), mu2, np.abs(sigma2), mu, np.abs(sigma)
+    return mu_0, np.abs(sigma_0), mu_n, np.abs(sigma_n)
