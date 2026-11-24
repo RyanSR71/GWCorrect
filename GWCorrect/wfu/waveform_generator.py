@@ -3,7 +3,7 @@ import bilby
 import scipy
 import logging
 from bilby.core.utils import logger
-from .utils import smooth_interpolation,BBH_waveform_correction
+from .utils import amplitude_difference_from_parameters, phase_difference_from_parameters, dimensionless_frequency_nodes_from_delta_xis
 
 
 
@@ -40,9 +40,23 @@ def WaveformCorrectionModelBBH(
         Angle between the total binary angular momentum and the line of sight
     phase: float
         The phase at reference frequency or peak amplitude (depends on waveform)
+    dimensionless_frequency_nodes: list
+        list of dimensionless_frequency_nodes
+    alpha_tildes: list
+        list of rescaled amplitude correction parameters
+    phi_tildes: list
+        list of rescaled phase correction parameters
+    
     kwargs: dict
         Optional keyword arguments
         Supported arguments:
+
+        - sigma_A_spline:
+          total standard deviation of the amplitude correction prior
+        - sigma_phi_spline:
+          total standard deviation of the phase correction prior
+        - gamma
+          smoothing parameter for the smooth interpolation functions; default: 0.025
 
         - waveform_approximant
         - reference_frequency
@@ -86,9 +100,8 @@ def WaveformCorrectionModelBBH(
     pn_tidal_order = kwargs.get('pn_tidal_order',-1)
     pn_phase_order = kwargs.get('pn_phase_order',-1)
     pn_amplitude_order = kwargs.get('pn_amplitude_order',0)
-    sigma_dA_spline = kwargs.get('sigma_dA_spline',None)
-    sigma_dphi_spline = kwargs.get('sigma_dphi_spline',None)
-    xi_high = kwargs.get('xi_high',1/np.pi)
+    sigma_A_spline = kwargs.get('sigma_A_spline',None)
+    sigma_phi_spline = kwargs.get('sigma_phi_spline',None)
     gamma = kwargs.get('gamma',0.025)
     
     waveform_arguments = dict(
@@ -104,9 +117,17 @@ def WaveformCorrectionModelBBH(
         a_1=a_1, a_2=a_2, tilt_1=tilt_1, tilt_2=tilt_2, phi_12=phi_12,
         phi_jl=phi_jl, **waveform_arguments)
 
-    waveform_correction = BBH_waveform_correction(frequency_array,xi_0,delta_xi_tilde,dAs,dphis,
-                                                 sigma_dA_spline,sigma_dphi_spline,
-                                                 mass_1,mass_2,xi_high,gamma)
+    if sigma_A_spline is not None:
+        amplitude_difference = amplitude_difference_from_parameters(frequency_array,dimensionless_frequency_nodes,alpha_tildes,sigma_A_spline,mass_1,mass_2,gamma)
+    else:
+        amplitude_difference = 0
+
+    if sigma_phi_spline is not None:
+        phase_difference = phase_difference_from_parameters(frequency_array,dimensionless_frequency_nodes,phi_tildes,sigma_phi_spline,mass_1,mass_2,gamma)
+    else:
+        phase_difference = 0
+
+    waveform_correction = (1+amplitude_difference)*np.exp(phase_difference*1j)
     
     model_strain['plus'] *= waveform_correction
     model_strain['cross'] *= waveform_correction
@@ -116,145 +137,87 @@ def WaveformCorrectionModelBBH(
 
 
 def binary_black_hole_correction_conversion(parameters):
-    """
-    Convert parameters we have into parameters we need.
-
-    This is defined by the parameters of bilby.source.lal_binary_black_hole()
-
-
-    Mass: mass_1, mass_2
-    Spin: a_1, a_2, tilt_1, tilt_2, phi_12, phi_jl
-    Extrinsic: luminosity_distance, theta_jn, phase, ra, dec, geocent_time, psi
-
-    This involves popping a lot of things from parameters.
-    The keys in added_keys should be popped after evaluating the waveform.
+    '''
+    Converts source and waveform correction parameters to use with WaveformCorrectionModelBBH
 
     Parameters
-    ==========
+    ==================
     parameters: dict
-        dictionary of parameter values to convert into the required parameters
+        dictionary of input parameters
 
     Returns
-    =======
+    ==================
     converted_parameters: dict
-        dict of the required parameters
+        dictionary of converted parameters
     added_keys: list
-        keys which are added to parameters during function call
-    """
+        list of parameters added to the parameter dictionary
+    '''
+    converted_parameters,_ = bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters(parameters)
 
-    converted_parameters = parameters.copy()
-    original_keys = list(converted_parameters.keys())
-    if 'luminosity_distance' not in original_keys:
-        if 'redshift' in converted_parameters.keys():
-            converted_parameters['luminosity_distance'] = \
-                redshift_to_luminosity_distance(parameters['redshift'])
-        elif 'comoving_distance' in converted_parameters.keys():
-            converted_parameters['luminosity_distance'] = \
-                comoving_distance_to_luminosity_distance(
-                    parameters['comoving_distance'])
+    delta_xi_keys = [key for key in parameters if 'delta_xi_' in key]
+    alpha_tilde_keys = [key for key in parameters if 'alpha_tilde_' in key]
+    phi_tilde_keys = [key for key in parameters if 'phi_tilde_' in key]
 
-    for key in original_keys:
-        if key[-7:] == '_source':
-            if 'redshift' not in converted_parameters.keys():
-                converted_parameters['redshift'] =\
-                    luminosity_distance_to_redshift(
-                        parameters['luminosity_distance'])
-            converted_parameters[key[:-7]] = converted_parameters[key] * (
-                1 + converted_parameters['redshift'])
-
-    # we do not require the component masses be added if no mass parameters are present
-    converted_parameters = bilby.gw.conversion.generate_component_masses(converted_parameters, require_add=False)
-
-    for idx in ['1', '2']:
-        key = 'chi_{}'.format(idx)
-        if key in original_keys:
-            if "chi_{}_in_plane".format(idx) in original_keys:
-                converted_parameters["a_{}".format(idx)] = (
-                    converted_parameters[f"chi_{idx}"] ** 2
-                    + converted_parameters[f"chi_{idx}_in_plane"] ** 2
-                ) ** 0.5
-                converted_parameters[f"cos_tilt_{idx}"] = (
-                    converted_parameters[f"chi_{idx}"]
-                    / converted_parameters[f"a_{idx}"]
-                )
-            elif "a_{}".format(idx) not in original_keys:
-                converted_parameters['a_{}'.format(idx)] = abs(
-                    converted_parameters[key])
-                converted_parameters['cos_tilt_{}'.format(idx)] = \
-                    np.sign(converted_parameters[key])
-            else:
-                with np.errstate(invalid="raise"):
-                    try:
-                        converted_parameters[f"cos_tilt_{idx}"] = (
-                            converted_parameters[key] / converted_parameters[f"a_{idx}"]
-                        )
-                    except (FloatingPointError, ZeroDivisionError):
-                        logger.debug(
-                            "Error in conversion to spherical spin tilt. "
-                            "This is often due to the spin parameters being zero. "
-                            f"Setting cos_tilt_{idx} = 1."
-                        )
-                        converted_parameters[f"cos_tilt_{idx}"] = 1.0
-
-    for key in ["phi_jl", "phi_12"]:
-        if key not in converted_parameters:
-            converted_parameters[key] = 0.0
-
-    for angle in ['tilt_1', 'tilt_2', 'theta_jn']:
-        cos_angle = str('cos_' + angle)
-        if cos_angle in converted_parameters.keys():
-            with np.errstate(invalid="ignore"):
-                converted_parameters[angle] = np.arccos(converted_parameters[cos_angle])
-
-    if "delta_phase" in original_keys:
-        with np.errstate(invalid="ignore"):
-            converted_parameters["phase"] = np.mod(
-                converted_parameters["delta_phase"]
-                - np.sign(np.cos(converted_parameters["theta_jn"]))
-                * converted_parameters["psi"],
-                2 * np.pi)
-    
-    dA_keys = [key for key in parameters if 'dA_' in key]
-    dphi_keys = [key for key in parameters if 'dphi_' in key]
-    
-    if len(dA_keys) == 0:
-        correct_amplitude = False
+    if 'xi_0' and 'xi_n' in parameters.keys():
+        n = len(delta_xi_keys) + 2 #add an extra 1 to account for xi_0
     else:
-        dAs = [parameters[key] for key in dA_keys]
-        if not any(dAs):
+        n = 0
+
+    if n > 2:
+        delta_xis = [parameters[key] for key in delta_xi_keys]
+        dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_delta_xis(parameters['xi_0'],parameters['xi_n'],delta_xis)
+    elif n == 2:
+        dimensionless_frequency_nodes = [parameters['xi_0'],parameters['xi_n']]
+    else:
+        dimensionless_frequency_nodes = [0.01,1] #arbitrary choice
+
+    converted_parameters['dimensionless_frequency_nodes'] = dimensionless_frequency_nodes
+
+    if 'alpha_tilde_0' in alpha_tilde_keys:
+        correction = 0
+    elif 'phi_tilde_0' in phi_tilde_keys:
+        correction = 0
+    else:
+        correction = 1
+    
+    if len(alpha_tilde_keys) == 0:
+        correct_amplitude = False
+    elif len(alpha_tilde_keys)+correction == n:
+        alpha_tildes = [parameters[key] for key in alpha_tilde_keys]
+        if not any(alpha_tildes):
             correct_amplitude = False
         else:
             correct_amplitude = True
-    
-    if len(dphi_keys) == 0:
-        correct_phase = False
     else:
-        dphis = [parameters[key] for key in dphi_keys]
-        if not any(dphis):
+        raise Exception(f'Amplitude correction does not have the same number of parameters as frequency nodes! alpha_tildes: {len(alpha_tilde_keys)} n: {n}')
+    
+    if len(phi_tilde_keys) == 0:
+        correct_phase = False
+    elif len(phi_tilde_keys)+correction == n:
+        phi_tildes = [parameters[key] for key in phi_tilde_keys]
+        if not any(phi_tildes):
             correct_phase = False
         else:
             correct_phase = True
-            
+    else:
+        raise Exception(f'Phase correction does not have the same number of parameters as frequency nodes! phi_tildes: {len(phi_tilde_keys)} n: {n}')
+    
     if correct_amplitude and correct_phase:
-        if len(dAs) != len(dphis):
-            raise Exception(f'Amplitude and Phase corrections do not have the same number of parameters! dA: {len(dAs)} dphi: {len(dphis)}')
-        else:
-            converted_parameters['dAs'] = dAs
-            converted_parameters['dphis'] = dphis
+            converted_parameters['alpha_tildes'] = alpha_tildes
+            converted_parameters['phi_tildes'] = phi_tildes
     
     if correct_amplitude and not correct_phase:
-        converted_parameters['dAs'] = dAs
-        converted_parameters['dphis'] = list(np.zeros(len(dAs)))
+        converted_parameters['alpha_tildes'] = alpha_tildes
+        converted_parameters['phi_tildes'] = list(np.zeros(len(alpha_tildes)))
         
     if correct_phase and not correct_amplitude:
-        converted_parameters['dphis'] = dphis
-        converted_parameters['dAs'] = list(np.zeros(len(dphis)))
+        converted_parameters['phi_tildes'] = phi_tildes
+        converted_parameters['alpha_tildes'] = list(np.zeros(len(phi_tildes)))
         
     if not (correct_phase or correct_amplitude):
-        converted_parameters['dAs'] = [0,0]
-        converted_parameters['dphis'] = [0,0]
+        converted_parameters['alpha_tildes'] = [0,0]
+        converted_parameters['phi_tildes'] = [0,0]
         
-    added_keys = [key for key in converted_parameters.keys()
-                  if key not in original_keys]
+    added_keys = [key for key in converted_parameters.keys()]
 
     return converted_parameters, added_keys
