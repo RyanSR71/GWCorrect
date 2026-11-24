@@ -3,7 +3,8 @@ import bilby
 import scipy
 import logging
 from bilby.core.utils import logger
-from .utils import amplitude_difference_from_parameters, phase_difference_from_parameters, dimensionless_frequency_nodes_from_delta_xis
+from .utils import amplitude_difference_from_parameters, phase_difference_from_parameters
+from .conversion import dimensionless_frequency_nodes_from_delta_xis
 
 
 
