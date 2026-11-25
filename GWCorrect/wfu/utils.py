@@ -193,7 +193,7 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,minimum_frequency,maximum_
         amplitude = np.delete(amplitude,zero_indices)
         freqs = np.delete(freqs,zero_indices)
         
-        effective_amplitude = np.interp(geometrized_frequency_grid,freqs,2*amplitude*np.sqrt(waveform_generator.frequency_array))
+        effective_amplitude = np.interp(geometrized_frequency_grid,freqs,2*amplitude*np.sqrt(convert_to_SI_frequency(freqs,M)))
         ASD = np.interp(geometrized_frequency_grid,convert_to_dimensionless_frequency(asd_data[:,0],M),asd_data[:,1])
         nodes = np.linspace(0,len(geometrized_frequency_grid)-1,100).astype(int)
         parameters = (effective_amplitude-ASD)[nodes]
