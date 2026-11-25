@@ -23,6 +23,7 @@ This package relies on: `bilby <https://bilby-dev.github.io/bilby/index.html>`_,
 
    notebooks/Parameterization_and_Waveform_Differences.ipynb
    notebooks/ppE_Tutorial.ipynb
+   notebooks/Late-Inspiral_Corrected_Waveform_Tutorial.ipynb
 
 .. toctree::
    :maxdepth: 1
