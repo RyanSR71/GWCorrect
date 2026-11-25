@@ -18,7 +18,7 @@ Conversion function to generate constrained parameters: total_mass, epsilon_f, a
 
 .. math::
 
-  \epsilon_\alpha=\sum_{k=1}^n\theta(1-\alpha_k)
+  \epsilon_\alpha=\sum_{k=1}^n\theta(-\alpha_k-1)
 
 Parameters:
 -----------
