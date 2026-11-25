@@ -139,11 +139,11 @@ def conversion(input_parameters,**kwargs):
                 xi_0 = parameters['xi_0'][i]
                 xi_n = parameters['xi_n'][i]
                 dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_delta_xis(xi_0,xi_n,delta_xis)
-                delta_f_0n = wfu.conversion.convert_to_SI_frequency(xi_n-xi_0,total_mass)
+                delta_f_0n = convert_to_SI_frequency(xi_n-xi_0,total_mass)
                 if delta_f_0n < 4*n/duration:
                     delta_f += 1
                 for k in range(1,n+1):
-                    delta_f_jk = wfu.conversion.convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
+                    delta_f_jk = convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
                     if delta_f_jk < 4/duration:
                         delta_f += 1
                 epsilon_f.append(delta_f)
@@ -168,11 +168,11 @@ def conversion(input_parameters,**kwargs):
             xi_0 = parameters['xi_0']
             xi_n = parameters['xi_n']
             dimensionless_frequency_nodes = dimensionless_frequency_nodes_from_delta_xis(xi_0,xi_n,delta_xis)
-            delta_f_0n = wfu.conversion.convert_to_SI_frequency(xi_n-xi_0,total_mass)
+            delta_f_0n = convert_to_SI_frequency(xi_n-xi_0,total_mass)
             if delta_f_0n < 4*n/duration:
                 epsilon_f += 1
             for k in range(1,n+1):
-                delta_f_jk = wfu.conversion.convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
+                delta_f_jk = convert_to_SI_frequency(dimensionless_frequency_nodes[k]-dimensionless_frequency_nodes[k-1],total_mass)
                 if delta_f_jk < 4/duration:
                     epsilon_f += 1
             
