@@ -11,7 +11,7 @@ from .conversion import dimensionless_frequency_nodes_from_delta_xis
 def WaveformCorrectionModelBBH(
         frequency_array, mass_1, mass_2, luminosity_distance, a_1, tilt_1,
         phi_12, a_2, tilt_2, phi_jl, theta_jn, phase,
-        xi_0, delta_xi_tilde, dAs, dphis, **kwargs):
+        dimensionless_frequency_nodes, alpha_tildes, phi_tildes, **kwargs):
     """ A Binary Black Hole waveform model using lalsimulation
 
     Parameters
