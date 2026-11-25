@@ -218,27 +218,33 @@ def A_ASD_solutions(waveform_generator,asd_data,prior,minimum_frequency,maximum_
 
 
 
-def gaussian(x, N, mu, sigma):
+def double_gaussian(x, N1, mu1, sigma1, N2, mu2, sigma2):
     '''
-    Gaussian function.
+    Double Gaussian function.
 
     Parameters
     ==================
     x: numpy.ndarray
         input array
-    N: float
-        scaling constant
-    mu: float
-        mean of the Gaussian
-    sigma: float
-        standard deviation of the Gaussian
+    N1: float
+        first scaling constant
+    mu1: float
+        mean of the first Gaussian
+    sigma1: float
+        standard deviation of the first Gaussian
+    N2: float
+        second scaling constant
+    mu2: float
+        mean of the second Gaussian
+    sigma2: float
+        standard deviation of the second Gaussian
 
     Returns
     ==================
     output_array: numpy.ndarray
-        output Gaussian corresponding to the input array
+        output double Gaussian corresponding to the input array
     '''
-    output_array = N*np.exp(-0.5*((x - mu)/sigma)**2)
+    output_array = N1*np.exp(-0.5*((x - mu1)/sigma1)**2)+N2*np.exp(-0.5*((x - mu2)/sigma2)**2)
     
     return output_array
 
@@ -267,14 +273,10 @@ def gaussian_parameters_from_A_ASD_solutions(lower_xis,upper_xis):
         standard deviation of the upper_xis distribution
     '''
 
-    counts, edges = np.histogram(lower_xis, bins=100, density=True)
+    total_xis = lower_xis + upper_xis
+    counts, edges = np.histogram(total_xis, bins=100, density=True)
     centers = 0.5 * (edges[:-1] + edges[1:])
-    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.01, 0.01])
-    _, mu_0, sigma_0 = popt
+    popt, pcov = scipy.optimize.curve_fit(double_gaussian, centers, counts, p0=[1, 0.01, 0.01, 1, 0.1, 0.1])
+    _, mu_0, sigma_0, _, mu_n, sigma_n = popt
 
-    counts, edges = np.histogram(upper_xis, bins=100, density=True)
-    centers = 0.5 * (edges[:-1] + edges[1:])
-    popt, pcov = scipy.optimize.curve_fit(gaussian, centers, counts, p0=[1, 0.1, 0.01])
-    _, mu_n, sigma_n = popt
-    
     return mu_0, np.abs(sigma_0), mu_n, np.abs(sigma_n)
