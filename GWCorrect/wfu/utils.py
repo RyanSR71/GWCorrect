@@ -147,7 +147,7 @@ def phase_difference_from_parameters(frequency_array,dimensionless_frequency_nod
 
 
 
-def A_ASD_solutions(waveform_generator,asd_data,prior,minimum_frequency,maximum_frequency,samples,desc):
+def A_ASD_solutions(waveform_generator,asd_data,prior,samples,minimum_frequency,maximum_frequency,desc):
     '''
     Computes the distributions in dimensionless frequency where waveforms cross detector noise.
 
