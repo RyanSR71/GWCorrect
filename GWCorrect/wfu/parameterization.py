@@ -142,7 +142,7 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
         default: None
     correction_parameter: float, optional
         fraction of maximum amplitude to cut off the amplitude at
-        default: 0.0001
+        default: 0.001
     ref_amplitude: numpy.ndarray, optional
         reference amplitude for residual phase calculation
         default: None
@@ -170,7 +170,7 @@ def parameterization(hf1,hf2,prior,nsamples,**kwargs):
     npoints = kwargs.get('npoints',None)
     polarization = kwargs.get('polarization','plus')
     psd_data = kwargs.get('psd_data',None)
-    correction_parameter = kwargs.get('correction_parameter',0.0001)
+    correction_parameter = kwargs.get('correction_parameter',0.001)
     ref_amplitude = kwargs.get('ref_amplitude',None)
     spline_resolution = kwargs.get('spline_resolution',0.5)
 
