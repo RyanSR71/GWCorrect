@@ -4,7 +4,7 @@ parameterization
 .. code-block:: python
 
    GWCorrect.wfu.parameterization.parameterization(hf1,hf2,prior,nsamples,
-   spline_resolution=0.5,npoints=None,psd_data=None,correction_parameter=0.0001,
+   spline_resolution=0.5,npoints=None,psd_data=None,correction_parameter=0.001,
    ref_amplitude=None,polarization='plus')
 
 Generates samples of waveform differences between two approximants and parameterizes the data.
