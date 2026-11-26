@@ -9,5 +9,5 @@ Utility Functions
   rolling_average
   smooth_interpolation
   A_ASD_solutions
-  gaussian
+  double_gaussian
   gaussian_parameters_from_A_ASD_solutions
