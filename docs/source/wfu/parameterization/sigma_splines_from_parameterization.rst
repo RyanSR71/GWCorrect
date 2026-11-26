@@ -10,11 +10,19 @@ Generates the standard deviations of the waveform correction priors and stores t
 
 .. math::
 
-    \sigma_\mathcal{A}(\xi)=\sqrt{(\overline{\Delta\mathcal{A}_\mu}(\xi))^2+\left(\delta\mathcal{A}_\mu(\xi)\right)^2}
+    \overline{\delta\mathcal{A}_\mu}=\sqrt{\left(1-2/\pi\right)\left(\delta\mathcal{A}_\mu^+-\delta\mathcal{A}_\mu^-\right)^2+\delta\mathcal{A}_\mu^+\delta\mathcal{A}_\mu^-}
 
 .. math::
 
-    \sigma_\phi(\xi)=\sqrt{(\overline{\Delta\phi_\mu}(\xi))^2+\left(\delta\phi_\mu(\xi)\right)^2}
+    \overline{\delta\phi_\mu}=\sqrt{\left(1-2/\pi\right)\left(\delta\phi_\mu^+-\delta\phi_\mu^-\right)^2+\delta\phi_\mu^+\delta\phi_\mu^-}
+
+.. math::
+
+   \sigma_\mathcal{A}(\xi)=\sqrt{\left(\overline{\Delta\mathcal{A}_\mu}(\xi)\right)^2+\left(\overline{\delta\mathcal{A}_\mu}(\xi)\right)^2}
+
+.. math::
+
+   \sigma_\phi(\xi)=\sqrt{\left(\overline{\Delta\phi_\mu}(\xi)\right)^2+\left(\overline{\delta\phi_\mu}(\xi)\right)^2}
 
 Parameters:
 -----------
@@ -31,7 +39,7 @@ resolution: int, optional, (1000)
 
 Returns:
 --------
-sigma_dA_spline: scipy.interpolate._cubic.CubicSpline
-    scipy cubic spline object encoding the standard deviation of the dA prior
-sigma_dphi_spline: scipy.interpolate._cubic.CubicSpline
-    scipy cubic spline object encoding the standard deviation of the dphi prior
+sigma_A_spline: scipy.interpolate._cubic.CubicSpline
+    scipy cubic spline object encoding the standard deviation of the amplitude correction prior
+sigma_phi_spline: scipy.interpolate._cubic.CubicSpline
+    scipy cubic spline object encoding the standard deviation of the phase correction prior
