@@ -8,5 +8,5 @@ Parameterization
   fd_model_difference
   parameterization
   recovery_from_parameterization
-  uncertainties_from_parameterization
+  split_gaussian_parameters_from_parameterization
   sigma_splines_from_parameterization
