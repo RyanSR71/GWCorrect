@@ -128,6 +128,15 @@ def WaveformCorrectionModelBBH(
     else:
         phase_difference = 0
 
+    if (sigma_A_spline is None) and (sigma_phi_spline is None):
+        raise Exception('Waveform Correction Splines Not Provided!')
+
+    if np.any(alpha_tildes) and (sigma_A_spline is None):
+        raise Exception('Amplitude correction parameters provided without prior spline!')
+
+    if np.any(phi_tildes) and (sigma_phi_spline is None):
+        raise Exception('Phase correction parameters provided without prior spline!')
+
     waveform_correction = (1+amplitude_difference)*np.exp(phase_difference*1j)
     
     model_strain['plus'] *= waveform_correction
@@ -170,7 +179,7 @@ def binary_black_hole_correction_conversion(parameters):
     elif n == 2:
         dimensionless_frequency_nodes = [parameters['xi_0'],parameters['xi_n']]
     else:
-        dimensionless_frequency_nodes = [0.01,1] #arbitrary choice
+        dimensionless_frequency_nodes = [0.1,1/np.pi] #arbitrary
 
     converted_parameters['dimensionless_frequency_nodes'] = dimensionless_frequency_nodes
 
@@ -218,6 +227,7 @@ def binary_black_hole_correction_conversion(parameters):
     if not (correct_phase or correct_amplitude):
         converted_parameters['alpha_tildes'] = [0,0]
         converted_parameters['phi_tildes'] = [0,0]
+        converted_parameters['dimensionless_frequency_nodes'] = [0.1,1/np.pi] #arbitrary
         
     added_keys = [key for key in converted_parameters.keys()]
 
