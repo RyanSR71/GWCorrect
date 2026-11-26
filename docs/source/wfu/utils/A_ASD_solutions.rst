@@ -3,7 +3,7 @@ A_ASD_solutions
 
 .. code-block:: python
 
-  GWCorrect.wfu.utils.A_ASD_solutions(waveform_generator,asd_data,prior,samples,desc)
+  GWCorrect.wfu.utils.A_ASD_solutions(waveform_generator,asd_data,prior,samples,minimum_frequency,maximum_frequency,desc)
 
 Computes the distributions in dimensionless frequency where waveforms cross detector noise.
 
@@ -21,6 +21,10 @@ prior: bilby.core.prior.PriorDict
     bilby prior object to draw BBH parameters from
 samples: int
     number of waveforms to draw
+minimum_frequency: float
+    lower bound on the SI frequency band
+maximum_frequency: float
+    upper bound on the SI frequency band
 desc: string
     description of what this function is doing; this will be printed by the logger while this function runs
 
