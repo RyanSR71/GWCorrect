@@ -6,8 +6,4 @@ Prior
   :caption: GWCorrect.wfu.prior
 
   TotalMassConstraint
-  conversion
-  frequency_node_prior_parameters
-  TFDG
-  LEHG
-  REHG
+  outer_frequency_node_prior_parameters
