@@ -4,7 +4,7 @@ fd_model_difference
 .. code-block:: python
 
    GWCorrect.wfu.parameterization.fd_model_difference(hf1,hf2,injection=None,npoints=None,
-   polarization='plus',psd_data=None,correction_parameter=0.0001,ref_amplitude=None)
+   polarization='plus',psd_data=None,correction_parameter=0.001,ref_amplitude=None)
 
 Generates frequency domain waveform differences between two models hf1 and hf2.
 
@@ -36,7 +36,7 @@ polarization: string, optional, ('plus')
    polarization of the strain data {'plus','cross'}
 psd_data: numpy.ndarray, optional, (None)
    array containing the power spectral density data and their corresponding frequencies; if None, psd_data will be set to `GW170817 PSD data <https://dcc.ligo.org/ligo-p1900011/public>`_
-correction_parameter: float, optional, (0.0001)
+correction_parameter: float, optional, (0.001)
    fraction of the peak frequency domain amplitudes at which to cut off the amplitudes; part of the f_disc calculation
 ref_amplitude: numpy.ndarray, optional, (None)
    reference amplitude for aligned phase calculation; will be generated automatically if not given
