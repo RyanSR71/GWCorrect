@@ -5,6 +5,7 @@ Utility Functions
   :maxdepth: 3
   :caption: GWCorrect.wfu.utils
 
+  beta_from_beta_tilde_wrapped
   inversion_function
   one_sided_planck_taper
   apply_tapering_to_amplitude
@@ -14,4 +15,3 @@ Utility Functions
   ppE_transition_correction_to_phase
   ringdown_frequency
   apply_ppe_correction
-  beta_from_beta_tilde_wrapped
