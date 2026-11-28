@@ -229,9 +229,9 @@ def MultippECorrectionModel(
         delta_epsilon = inversion_function(0,3,b)*beta_from_beta_tilde_wrapped(delta_epsilon_tilde,minimum_frequency,1/np.pi,b,0.018,mass_1+mass_2)
     
         model_strain['plus'] = apply_ppe_correction(model_strain['plus'],frequency_array,mass_1+mass_2,beta,b,delta_epsilon,
-                                                    Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned,window_size=41)
+                                                    Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned)
         model_strain['cross'] = apply_ppe_correction(model_strain['cross'],frequency_array,mass_1+mass_2,beta,b,delta_epsilon,
-                                                     Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned,window_size=41)
+                                                     Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned)
     
     return model_strain
 
