@@ -8,7 +8,7 @@ Computes the ppE phase correction for the inspiral regime Mf<Mf_IM. This functio
 
 .. math::
 
-  \Delta\phi=\beta u^b
+  \Delta\phi_\mathrm{ppE}^\mathrm{IM}=\beta u^b
 
 Parameters:
 -----------
