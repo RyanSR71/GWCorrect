@@ -5,6 +5,8 @@
 project = 'GWCorrect'
 author = 'Ryan Johnson'
 
+html_show_copyright = False
+
 version = '1.0'
 
 # -- General configuration
@@ -17,6 +19,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'nbsphinx',
     'sphinx.ext.autosectionlabel',
+    'sphinx_rtd_theme'
 ]
 
 intersphinx_mapping = {
@@ -29,7 +32,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 pygments_style = "sphinx"
 
 # -- Options for EPUB output
