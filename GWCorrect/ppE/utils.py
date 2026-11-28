@@ -106,7 +106,7 @@ def ringdown_frequency(strain,frequency_array, total_mass):
     f_RD = freqs[i_min + i_fLR]
     return f_RD
 
-def apply_ppe_correction(strain,frequency_array, total_mass, ppe_beta, ppe_b, ppe_delta_epsilon=0.0, Mfreq_IM = 0.018, ratio_f_MR_to_f_RD=0.75, aligned=True, window_size = 41):
+def apply_ppe_correction(strain,frequency_array, total_mass, ppe_beta, ppe_b, ppe_delta_epsilon=0.0, Mfreq_IM = 0.018, ratio_f_MR_to_f_RD=0.75, aligned=True):
     """Applies the parameterized post-Einsteinian corrections to a waveform
     in the frequency domain such that the phase is first-differentiable across
     the different frequency regimes, where a different correction is
