@@ -2,7 +2,7 @@ ringdown_frequency
 ==================
 .. code-block:: python
 
-  GWCorrect.ppE.utils.ringdown_frequency(strain,frequency_array, total_mass)
+  GWCorrect.ppE.utils.ringdown_frequency(strain, frequency_array, total_mass)
 
 Numerically finds the ringdown frequency, f_RD, given a frequency domain waveform. The ringdown frequency is as defined in: https://arxiv.org/pdf/1508.07253
 
@@ -12,12 +12,14 @@ Numerically finds the ringdown frequency, f_RD, given a frequency domain wavefor
 
 Parameters:
 -----------
-fd_waveform : FrequencySeries
-  The frequency domain waveform of the coalescence.
+strain: numpy.ndarray
+  Gravitational-wave strain
+frequency_array: numpy.ndarray
+  frequency array that goes with the strain
 total_mass : float
-  The total mass of the binary, in solar masses.
+  total mass of the binary in solar masses.
 
 Returns:
 --------
 f_RD : float
-    The ringdown frequency, in Hz.
+    the ringdown frequency in Hz
