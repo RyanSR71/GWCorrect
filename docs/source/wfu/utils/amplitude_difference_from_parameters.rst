@@ -3,7 +3,7 @@ amplitude_difference_from_parameters
 .. code-block:: python
 
   GWCorrect.wfu.utils.amplitude_difference_from_parameters(frequency_array,dimensionless_frequency_nodes,
-                                                           alpha_tildes,sigma_A_spline,mass_1,mass_2,gamma)
+  alpha_tildes,sigma_A_spline,mass_1,mass_2,gamma)
 
 Generates the amplitude correction from the frequency nodes and rescaled amplitude correction parameters
 
