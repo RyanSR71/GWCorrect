@@ -16,6 +16,7 @@ This package relies on: `bilby <https://bilby-dev.github.io/bilby/index.html>`_,
    :caption: Contents:
 
    installation
+   citation
 
 .. toctree::
    :maxdepth: 1
