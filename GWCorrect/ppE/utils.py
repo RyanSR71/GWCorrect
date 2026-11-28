@@ -49,7 +49,6 @@ def ppe_post_inspiral_correction_to_phase(freqs, total_mass, ppe_beta, ppe_b, pp
     velocity_IM_3 = np.pi * Mfreq_IM
     velocity_IM_b = pow(velocity_IM_3, ppe_b/3.0)
     return ppe_beta * velocity_IM_b + ppe_b / 3.0 * (ppe_beta + ppe_delta_epsilon) * velocity_IM_b * (velocities_3/velocity_IM_3 - 1.0)
-    #return ppe_beta * velocity_IM_b + ppe_b / 3.0 * ppe_beta*(1 + ppe_delta_epsilon) * velocity_IM_b * (velocities_3/velocity_IM_3 - 1.0)
 
 def dphi0(phi1, phi2, dphi1, dphi2, f1, f2):
     return (phi2-phi1)/(f2-f1)
