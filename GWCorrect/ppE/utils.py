@@ -1,12 +1,8 @@
 import numpy as np
 from numpy.linalg import inv
 import bilby
-import random
-import sys
-import scipy
 import lal
 import math
-from math import factorial
 
 def one_sided_planck_taper(e, n, N):
     if n == 0:
