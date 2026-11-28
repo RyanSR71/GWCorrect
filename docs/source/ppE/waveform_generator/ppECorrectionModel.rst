@@ -21,6 +21,12 @@ delta_epsilon_tilde: float
    rescaled ppE post-inspiral correction parameter
 b: float
    PN order parameter
+Mfreq_IM: float, optional, (0.018)
+   The dimensionless frequency at which the inspiral regime ends.
+ratio_f_MR_to_f_RD : float, optional, (0.75)
+   The fraction of the ringdown frequency at which the intermediate regime ends and becomes the merger-ringdown regime.
+aligned: bool, optional, (True)
+   if True, ppE phase correction will not include time or phase shifts relative to the GR waveform
 
 Returns:
 --------
