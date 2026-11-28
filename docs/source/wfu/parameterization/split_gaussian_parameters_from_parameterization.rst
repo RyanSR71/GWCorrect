@@ -3,8 +3,8 @@ split_gaussian_parameters_from_parameterization
 
 .. code-block:: python
 
-   GWCorrect.wfu.parameterization.split_gaussian_parameters_from_parameterization(parameterization,dimensionless=True,
-                                                                                  xi_min=0.001,xi_max=0.318,resolution=1000)
+   GWCorrect.wfu.parameterization.split_gaussian_parameters_from_parameterization(parameterization,
+   dimensionless=True,xi_min=0.001,xi_max=0.318,resolution=1000)
 
 Takes all of the sets in a parameterized waveform difference matrix and takes the mean and standard deviation of amplitude and phase difference.
 
