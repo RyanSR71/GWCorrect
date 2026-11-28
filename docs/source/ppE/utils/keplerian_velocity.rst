@@ -8,7 +8,7 @@ Computes the Keplerian velocty. This function is defined assuming geometrized un
 
 .. math::
 
-  u\equiv(\pi Mf)^{b/3}
+  u^b\equiv(\pi Mf)^{b/3}
 
 Parameters:
 -----------
@@ -22,4 +22,4 @@ ppe_b: float
 Returns:
 --------
 u: int
-  Keplerian velocity
+  Keplerian velocity raised to the power of b
