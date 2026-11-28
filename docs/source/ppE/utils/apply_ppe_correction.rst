@@ -25,6 +25,8 @@ ppe_b: float
   ppE PN order parameter
 ppe_delta_epsilon: float, optional, (0.0)
   ppE ringdown correction parameter
+Mfreq_IM: float, optional, (0.018)
+  The dimensionless frequency at which the inspiral regime ends.
 ratio_f_MR_to_f_RD : float, optional, (0.75)
   The fraction of the ringdown frequency at which the intermediate regime ends and becomes the merger-ringdown regime.
 aligned: bool, optional, (True)
