@@ -3,7 +3,8 @@ A_ASD_solutions
 
 .. code-block:: python
 
-  GWCorrect.wfu.utils.A_ASD_solutions(waveform_generator,asd_data,prior,samples,minimum_frequency,maximum_frequency,desc)
+  GWCorrect.wfu.utils.A_ASD_solutions(waveform_generator,asd_data,prior,samples,minimum_frequency,
+  maximum_frequency,desc)
 
 Computes the distributions in dimensionless frequency where waveforms cross detector noise.
 
