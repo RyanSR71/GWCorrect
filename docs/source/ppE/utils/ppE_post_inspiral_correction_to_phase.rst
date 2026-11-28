@@ -8,7 +8,7 @@ Computes the post-inspiral ppE phase correction. This function is defined assumi
 
 .. math::
 
-  u^b\equiv(\pi Mf)^{b/3}
+  \Delta\phi_\mathrm{ppE}^\epsilon(f\geq f_\mathrm{MR})=\beta u_\mathrm{IM}^b\left(1+\frac{b(\beta+\delta\epsilon)}{3\beta}(p^3-1)\right)
 
 Parameters:
 -----------
