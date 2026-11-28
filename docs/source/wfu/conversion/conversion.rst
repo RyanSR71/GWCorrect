@@ -4,7 +4,7 @@ conversion
 .. code-block:: python
 
   GWCorrect.wfu.conversion.conversion(parameters,n=None,fixed_total_mass=None,xi_max=None,
-                                      sigma_A_spline=None,gamma=0.025,duration=None)
+  sigma_A_spline=None,gamma=0.025,duration=None)
 
 Conversion function to generate constrained parameters: total_mass, epsilon_f, and epsilon_alpha
 
