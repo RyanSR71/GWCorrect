@@ -9,7 +9,7 @@ EXPERIMENTAL: Modified lal binary black hole frequency domain source model to ap
 
 .. math::
 
-   \mu_\mathrm{ppE}(f;\vartheta,\Phi)=\mu(f;\vartheta)\exp(i\Delta\phi_\mathrm{ppE}(f;\tilde\beta,\delta\tilde\epsilon,b))
+   \mu_{n\mathrm{ppE}}(f)=\mu(f;\vartheta)\exp\left(i\sum_{k=1}^n\Delta\phi_\mathrm{ppE}^\epsilon(f;\tilde\beta_k,\delta\tilde\epsilon_k,b_k)\right)
 
 Make sure to include all "beta_tilde_k", "delta_epsilon_tilde_k", and all "b_k" in the prior.
 
