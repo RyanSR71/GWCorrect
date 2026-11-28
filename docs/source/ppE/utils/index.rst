@@ -7,7 +7,7 @@ Utility Functions
 
   inversion_function
   one_sided_planck_taper
-  apply_tapering
+  apply_tapering_to_amplitude
   keplerian_velocity
   ppE_inspiral_correction_to_phase
   ppE_post_inspiral_correction_to_phase
