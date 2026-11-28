@@ -3,10 +3,9 @@
 # -- Project information
 
 project = 'GWCorrect'
-copyright = '2026, Ryan Johnson - No Rights Reserved'
 author = 'Ryan Johnson'
 
-version = '0.26.3'
+version = '1.0'
 
 # -- General configuration
 
@@ -30,7 +29,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'alabaster'
 pygments_style = "sphinx"
 
 # -- Options for EPUB output
