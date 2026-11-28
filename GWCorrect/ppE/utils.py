@@ -35,7 +35,7 @@ def inversion_function(a,b,x):
         I = -1
     return I
 
-def keplerian_velocity(freqs, total_mass, ppe_b = 1.0):
+def keplerian_velocity(freqs, total_mass, ppe_b):
     # If the total mass is given in solar masses,
     # the frequency should be given in solar masses^{-1}.
     # Likewise for if the total mass is given in seconds.
