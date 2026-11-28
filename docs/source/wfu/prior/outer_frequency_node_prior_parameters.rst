@@ -3,7 +3,8 @@ outer_frequency_node_prior_parameters
 
 .. code-block:: python
 
-  GWCorrect.wfu.prior.outer_frequency_node_prior_parameters(waveform_generator,asd_data,prior,samples=10000,xi_max=0.318)
+  GWCorrect.wfu.prior.outer_frequency_node_prior_parameters(waveform_generator,asd_data,prior,
+  samples=10000,xi_max=0.318)
 
 Generates gaussian parameters for the xi_0 and xi_n truncated gaussian priors by comparing waveforms to detector noise.
 
