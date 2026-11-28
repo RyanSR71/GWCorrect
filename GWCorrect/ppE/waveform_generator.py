@@ -110,9 +110,9 @@ def ppECorrectionModel(
     
     model_strain = dict()
     model_strain['plus'] = apply_ppe_correction(unmodified_strain['plus'],frequency_array,mass_1+mass_2,beta,b,delta_epsilon,
-                                                Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned,window_size=41)
+                                                Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned)
     model_strain['cross'] = apply_ppe_correction(unmodified_strain['cross'],frequency_array,mass_1+mass_2,beta,b,delta_epsilon,
-                                                 Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned,window_size=41)
+                                                 Mfreq_IM=Mfreq_IM,ratio_f_MR_to_f_RD=ratio_f_MR_to_f_RD,aligned=aligned)
     
     return model_strain
 
