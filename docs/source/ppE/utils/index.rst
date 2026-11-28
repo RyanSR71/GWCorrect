@@ -15,3 +15,4 @@ Utility Functions
   ppE_transition_correction_to_phase
   ringdown_frequency
   apply_ppe_correction
+  undocumented_functions
