@@ -1,5 +1,5 @@
-keplerian_velocity
-==================
+ppe_post_inspiral_correction_to_phase
+=====================================
 .. code-block:: python
 
   GWCorrect.ppE.utils.ppe_post_inspiral_correction_to_phase(freqs, total_mass, ppe_beta, ppe_b, ppe_delta_epsilon=0.0, Mfreq_IM=0.018)
